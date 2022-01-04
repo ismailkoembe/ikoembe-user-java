@@ -23,6 +23,7 @@ public class StudentsController {
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
 
     private StudentService studentService;
+    private Object Student;
 
     public StudentsController(StudentService studentService) {
         this.studentService = studentService;
@@ -32,11 +33,11 @@ public class StudentsController {
     @ApiOperation(value = "Creates new student")
     public
     @ResponseBody
-    ResponseEntity<Void> insert(@RequestBody Student student) throws ValidationException {
+    ResponseEntity<Student> insert(@RequestBody Student student) throws ValidationException {
         final LocalDateTime localDateTime = LocalDateTime.now();
         logger.info("A new student created with schoolNumber : {}, createdDate {}: ", student.getSchoolAccount(), localDateTime);
         this.studentService.insert(student);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(student);
     }
 
     @GetMapping(value = "/all")
