@@ -30,8 +30,8 @@ public class StudentService {
         return students;
     }
 
-    public Optional<Student> findStudentByEmail(String email) {
-        Optional<Student>student = this.studentRepository.findStudentByEmail(email);
+    public Optional<Student> findStudentBySchoolNumber(String schoolNumber) {
+        Optional<Student>student = this.studentRepository.findStudentBySchoolNumber(schoolNumber);
         return student;
     }
 

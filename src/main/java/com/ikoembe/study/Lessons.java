@@ -1,5 +1,11 @@
 package com.ikoembe.study;
 
 public enum Lessons {
-    MATH, HISTORY, ENGLISH
+    MATH, HISTORY, ENGLISH;
+
+    public String name;
+
+    public String getName() {
+        return name;
+    }
 }

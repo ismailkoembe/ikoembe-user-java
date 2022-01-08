@@ -20,9 +20,9 @@ public class TeacherController {
     @ApiOperation(value = "Creates new teacher")
     public
     @ResponseBody
-    ResponseEntity<Void> createTeacher(@RequestBody Teacher teacher){
+    ResponseEntity<Teacher> createTeacher(@RequestBody Teacher teacher){
         this.teacherService.insert(teacher);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(teacher);
 
     }
 }

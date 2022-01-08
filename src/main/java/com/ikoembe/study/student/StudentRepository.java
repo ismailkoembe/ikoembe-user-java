@@ -11,7 +11,8 @@ import java.util.Optional;
 public interface StudentRepository extends MongoRepository<Student, String> {
     @Override
     Optional<Student> findById(String s);
-    Optional<Student> findStudentByEmail(String email);
+
+    Optional<Student> findStudentBySchoolNumber(String email);
 
     @Override
     void deleteById(String id);

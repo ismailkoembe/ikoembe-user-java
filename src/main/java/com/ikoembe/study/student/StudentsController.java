@@ -1,7 +1,5 @@
 package com.ikoembe.study.student;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
@@ -35,7 +33,8 @@ public class StudentsController {
     @ResponseBody
     ResponseEntity<Student> insert(@RequestBody Student student) throws ValidationException {
         final LocalDateTime localDateTime = LocalDateTime.now();
-        logger.info("A new student created with schoolNumber : {}, createdDate {}: ", student.getSchoolAccount(), localDateTime);
+        logger.info("A new student{},{} created with schoolNumber : {}, createdDate {}: ",
+                student.getFirstname(), student.getLastname(), student.getSchoolNumber(), localDateTime);
         this.studentService.insert(student);
         return ResponseEntity.ok(student);
     }
@@ -45,9 +44,9 @@ public class StudentsController {
         return this.studentService.findAll();
     }
 
-    @GetMapping(value = "/email/{email}")
-    public Optional<Student> getStudentByEmail(@PathVariable("email") String email) {
-        return this.studentService.findStudentByEmail(email);
+    @GetMapping(value = "/schoolNumber/{schoolNumber}")
+    public Optional<Student> getStudentByEmail(@PathVariable("schoolNumber") String schoolNumber) {
+        return this.studentService.findStudentBySchoolNumber(schoolNumber);
     }
 
     @GetMapping(value = "/id/{id}")
@@ -72,7 +71,8 @@ public class StudentsController {
 
     @PatchMapping(path = "/update/id/{id}")
     @ApiOperation(value = "Patches a student's information")
-    public ResponseEntity<Void> patchStudentInfoById(@PathVariable String id, @RequestBody Map<String, Object> patches){
+    public ResponseEntity<Student> patchStudentInfoById(@PathVariable String id, @RequestBody Map<String, Object> patches){
+       //TODO Fix this bug
         Student student = studentService.findStudentById(id).orElseThrow(IllegalArgumentException::new);
         patches.forEach((k,v)-> {
             Field field = ReflectionUtils.findField(Student.class, k);
@@ -80,20 +80,20 @@ public class StudentsController {
             ReflectionUtils.setField(field,student, v);
         });
         this.studentService.updateStudentInfo(student);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(student);
     }
 
-    @PatchMapping(path = "/update/email/{email}")
+    @PatchMapping(path = "/update/schoolNumber/{schoolNumber}")
     @ApiOperation(value = "Patches a student's information with student email")
-    public ResponseEntity<Void> patchStudentInfoBySchoolAccount(@PathVariable String email, @RequestBody Map<String, Object> patches){
-        Student student = studentService.findStudentByEmail(email).orElseThrow(IllegalArgumentException::new);
+    public ResponseEntity<Student> patchStudentInfoBySchoolAccount(@PathVariable String schoolNumber, @RequestBody Map<String, Object> patches){
+        Student student = studentService.findStudentBySchoolNumber(schoolNumber).orElseThrow(IllegalArgumentException::new);
         patches.forEach((k,v)-> {
             Field field = ReflectionUtils.findField(Student.class, k);
             field.setAccessible(true);
             ReflectionUtils.setField(field,student, v);
         });
         this.studentService.updateStudentInfo(student);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(student);
     }
 
 }
