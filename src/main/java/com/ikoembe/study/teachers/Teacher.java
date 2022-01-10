@@ -11,17 +11,19 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 
-@Document(value = "Teachers")
+@Document(value = "teachers")
 @AllArgsConstructor
 @Getter
 @Setter
 public class Teacher {
     @Id
     private String id;
+    @Indexed
     private String firstname;
     private String lastname;
     private Address address;
     private String email;
+    private String photoUrl;
     @Indexed
     private String major;
     private String diplomaNumber;
