@@ -11,6 +11,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,11 +27,14 @@ public class Student {
     private String id;
     @Indexed(unique = true)
     private String schoolNumber;
+    @NotNull
     private String firstname;
+    @NotNull
     private String middleName;
     private String lastname;
     private String photoUrl;
     @Indexed
+    @NotNull
     private LocalDate birthdate;
     private Gender gender;
     @Indexed
