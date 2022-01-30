@@ -1,5 +1,6 @@
 package com.ikoembe.study.schools;
 
+import com.ikoembe.study.student.Student;
 import com.ikoembe.study.teachers.Teacher;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,7 +9,9 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(value = "Schools")
+import java.util.List;
+
+@Document(value = "schools")
 @AllArgsConstructor
 @Getter
 @Setter
@@ -17,7 +20,8 @@ public class School {
     private String id;
     @Indexed
     private String schoolName;
-    private String className;
-    private Teacher classTeacher;
+    private List<String> classes;
+    private List<Teacher> teachers;
+    private List<Student> students;
 
 }

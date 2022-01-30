@@ -26,4 +26,8 @@ public class SchoolService {
         return this.schoolRepository.findByClassName(className);
     }
 
+    public List<School> findAllBySchoolName(String className){
+        return this.schoolRepository.findByClassName(className);
+    }
+
 }

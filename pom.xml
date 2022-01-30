@@ -12,7 +12,7 @@
 	<artifactId>study</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>study</name>
-	<description>The first project for Spring Boot</description>
+	<description>Main Service of School Management Program</description>
 	<properties>
 		<java.version>1.8</java.version>
 	</properties>
