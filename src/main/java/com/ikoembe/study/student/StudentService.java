@@ -1,14 +1,9 @@
 package com.ikoembe.study.student;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.ikoembe.study.student.Student;
-import com.ikoembe.study.student.StudentRepository;
-import org.springframework.http.ResponseEntity;
+import com.ikoembe.study.student.models.Student;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Service

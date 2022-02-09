@@ -1,6 +1,6 @@
 package com.ikoembe.study.student;
 
-import com.ikoembe.study.student.Student;
+import com.ikoembe.study.student.models.Student;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

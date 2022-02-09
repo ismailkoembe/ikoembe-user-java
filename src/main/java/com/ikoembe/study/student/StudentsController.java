@@ -1,6 +1,7 @@
 package com.ikoembe.study.student;
 
 import com.google.common.base.Strings;
+import com.ikoembe.study.student.models.Student;
 import io.swagger.annotations.ApiOperation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +32,7 @@ public class StudentsController {
     @ApiOperation(value = "Creates new student")
     public
     @ResponseBody
-    ResponseEntity<Student> insert(@RequestBody Student student) throws ValidationException {
+    ResponseEntity<com.ikoembe.study.student.models.Student> insert(@RequestBody Student student) throws ValidationException {
         final LocalDateTime localDateTime = LocalDateTime.now();
         logger.info("A new student{},{} created with schoolNumber : {}, createdDate {}: ",
                 student.getFirstname(), student.getLastname(), student.getSchoolNumber(), localDateTime);
