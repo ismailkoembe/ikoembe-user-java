@@ -1,16 +1,21 @@
 package com.ikoembe.study.payload.request;
 
+import com.mongodb.lang.Nullable;
+import lombok.Getter;
+import lombok.Setter;
+
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.util.Set;
 
+@Getter @Setter
 public class SignupRequest {
     @NotBlank
     @Size(min = 3, max = 20)
     private String username;
  
-    @NotBlank
+    @Nullable
     @Size(max = 50)
     @Email
     private String email;
@@ -44,12 +49,5 @@ public class SignupRequest {
     public void setPassword(String password) {
         this.password = password;
     }
-    
-    public Set<String> getRoles() {
-      return this.roles;
-    }
-    
-    public void setRole(Set<String> roles) {
-      this.roles = roles;
-    }
+
 }

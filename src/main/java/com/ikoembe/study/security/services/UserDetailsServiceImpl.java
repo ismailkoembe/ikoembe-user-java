@@ -1,6 +1,6 @@
 package com.ikoembe.study.security.services;
 
-import com.ikoembe.study.student.models.User;
+import com.ikoembe.study.user.models.User;
 import com.ikoembe.study.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;

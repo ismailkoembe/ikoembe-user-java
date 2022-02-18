@@ -1,7 +1,7 @@
 package com.ikoembe.study.repository;
 
-import com.ikoembe.study.student.models.ERole;
-import com.ikoembe.study.student.models.Role;
+import com.ikoembe.study.user.models.ERole;
+import com.ikoembe.study.user.models.Role;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

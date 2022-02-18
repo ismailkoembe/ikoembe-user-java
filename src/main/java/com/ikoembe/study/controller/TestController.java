@@ -1,4 +1,4 @@
-package com.ikoembe.study.student;
+package com.ikoembe.study.controller;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.CrossOrigin;

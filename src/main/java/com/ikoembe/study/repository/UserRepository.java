@@ -1,6 +1,7 @@
 package com.ikoembe.study.repository;
 
-import com.ikoembe.study.student.models.User;
+import com.ikoembe.study.Gender;
+import com.ikoembe.study.user.models.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +14,8 @@ public interface UserRepository extends MongoRepository<User, String> {
   Boolean existsByUsername(String username);
 
   Boolean existsByEmail(String email);
+
+  Optional<User> findByGender(Gender gender);
+
+
 }

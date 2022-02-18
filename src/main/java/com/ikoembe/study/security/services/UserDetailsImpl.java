@@ -1,7 +1,7 @@
 package com.ikoembe.study.security.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.ikoembe.study.student.models.User;
+import com.ikoembe.study.user.models.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
