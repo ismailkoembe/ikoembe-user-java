@@ -69,6 +69,7 @@ public class AuthController {
 												 roles));
 	}
 
+	@Deprecated
 	@PostMapping("/signup")
 	public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
 		if (userRepository.existsByUsername(signUpRequest.getUsername())) {
@@ -77,7 +78,7 @@ public class AuthController {
 					.body(new MessageResponse("Error: Username is already taken!"));
 		}
 
-		if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+		if (signUpRequest.getEmail()!=null && userRepository.existsByEmail(signUpRequest.getEmail())) {
 			return ResponseEntity
 					.badRequest()
 					.body(new MessageResponse("Error: Email is already in use!"));
@@ -98,28 +99,28 @@ public class AuthController {
 		} else {
 			strRoles.forEach(role -> {
 				switch (role) {
-				case "admin":
+				case "ROLE_ADMIN":
 					log.info("A new {} {} added", signUpRequest.getRoles(), signUpRequest.getUsername());
 					Role userRole = roleRepository.findByName(ERole.ROLE_ADMIN)
 							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 					roles.add(userRole);
 					break;
 
-				case "student":
+				case "ROLE_STUDENT":
 					log.info("A new {} {} added", signUpRequest.getRoles(), signUpRequest.getUsername());
 					userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
 							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 					roles.add(userRole);
 					break;
 
-				case "guardian":
+				case "ROLE_GUARDIAN":
 					log.info("A new {} {} added", signUpRequest.getRoles(), signUpRequest.getUsername());
 					userRole = roleRepository.findByName(ERole.ROLE_GUARDIAN)
 							.orElseThrow(() -> new RuntimeException("Error: Role is not found."));
 					roles.add(userRole);
 						break;
 
-				case "teacher":
+				case "ROLE_TEACHER":
 						log.info("A new {} {} added", signUpRequest.getRoles(), signUpRequest.getUsername());
 						userRole = roleRepository.findByName(ERole.ROLE_TEACHER)
 								.orElseThrow(() -> new RuntimeException("Error: Role is not found."));

@@ -20,9 +20,12 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -47,13 +50,14 @@ public class UserController {
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
+        LocalDateTime createdDate = LocalDateTime.now();
         if (userRepository.existsByUsername(user.getUsername())) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error: Username is already taken!"));
         }
 
-        if (userRepository.existsByEmail(user.getEmail())) {
+        if (user.getEmail()!=null && userRepository.existsByEmail(user.getEmail())) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error: Email is already in use!"));
@@ -67,48 +71,56 @@ public class UserController {
         if (strRoles.size()==0) {
             log.error("Role shouldn't be null");
             throw new RuntimeException("Error: Role shouldn't be null");
-        } else {
-            strRoles.forEach(role -> {
-                switch (role.getName()) {
-                    case ROLE_ADMIN:
-                        log.info("A new {} {} added", role.getName(), user.getUsername());
-                        Role userRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                        break;
+        }
+        if (strRoles.size()>=1 ) {
+            if (strRoles.stream().filter(r -> r.getName().name().equals("ROLE_STUDENT"))
+                    .collect(Collectors.toList())
+                    .size()==1) {
+                log.error("Students cannot have multiple roles");
+                throw new RuntimeException("Error: Students cannot have multiple roles");
+            } else {
+                strRoles.forEach(role -> {
+                    switch (role.getName()) {
+                        case ROLE_ADMIN:
+                            log.info("A new {} {} added", role.getName(), user.getUsername());
+                            Role userRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(userRole);
+                            break;
 
-                    case ROLE_STUDENT:
-                        log.info("A new {} {} added", role.getName(), user.getUsername());
-                        userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                        break;
+                        case ROLE_STUDENT:
+                            log.info("A new {} {} added", role.getName(), user.getUsername());
+                            userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(userRole);
+                            break;
 
-                    case ROLE_GUARDIAN:
-                        log.info("A new {} {} added", role.getName(), user.getUsername());
-                        userRole = roleRepository.findByName(ERole.ROLE_GUARDIAN)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                        break;
+                        case ROLE_GUARDIAN:
+                            log.info("A new {} {} added", role.getName(), user.getUsername());
+                            userRole = roleRepository.findByName(ERole.ROLE_GUARDIAN)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(userRole);
+                            break;
 
-                    case ROLE_TEACHER:
-                        log.info("A new {} {} added", role.getName(), user.getUsername());
-                        userRole = roleRepository.findByName(ERole.ROLE_TEACHER)
-                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(userRole);
-                        break;
+                        case ROLE_TEACHER:
+                            log.info("A new {} {} added", role.getName(), user.getUsername());
+                            userRole = roleRepository.findByName(ERole.ROLE_TEACHER)
+                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(userRole);
+                            break;
 
-                    default:
-                        log.error("Error: Role {} is not found", role.getName());
-                        throw new RuntimeException("Error: Role is not found");
-                }
-            });
+                        default:
+                            log.error("Error: Role {} is not found", role.getName());
+                            throw new RuntimeException("Error: Role is not found");
+                    }
+                });
+            }
         }
 
         user.setRoles(roles);
         user.setPassword(encoder.encode(user.getPassword()));
+        user.setCreatedDate(createdDate);
         userRepository.save(user);
-
         return ResponseEntity.ok(user);
     }
 
