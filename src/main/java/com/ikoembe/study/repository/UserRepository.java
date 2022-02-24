@@ -1,7 +1,7 @@
 package com.ikoembe.study.repository;
 
-import com.ikoembe.study.Gender;
-import com.ikoembe.study.user.models.User;
+import com.ikoembe.study.models.Gender;
+import com.ikoembe.study.models.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 

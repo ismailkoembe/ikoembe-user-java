@@ -1,28 +1,24 @@
 package com.ikoembe.study.controller;
 
-import com.ikoembe.study.Gender;
+import com.ikoembe.study.models.Gender;
 import com.ikoembe.study.payload.response.MessageResponse;
 import com.ikoembe.study.repository.RoleRepository;
 import com.ikoembe.study.repository.UserRepository;
 import com.ikoembe.study.security.jwt.JwtUtils;
-import com.ikoembe.study.user.models.ERole;
-import com.ikoembe.study.user.models.Role;
-import com.ikoembe.study.user.models.User;
-import io.swagger.annotations.ApiOperation;
+import com.ikoembe.study.models.ERole;
+import com.ikoembe.study.models.Role;
+import com.ikoembe.study.models.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.web.servlet.headers.HeadersSecurityMarker;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
