@@ -1,4 +1,4 @@
-package com.ikoembe.study;
+package com.ikoembe.study.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,6 +1,5 @@
-package com.ikoembe.study.user.models;
+package com.ikoembe.study.models;
 
-import com.ikoembe.study.Gender;
 import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

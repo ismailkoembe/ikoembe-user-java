@@ -1,4 +1,4 @@
-package com.ikoembe.study.user.models;
+package com.ikoembe.study.models;
 
 import java.security.PrivateKey;
 
