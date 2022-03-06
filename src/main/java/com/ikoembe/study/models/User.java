@@ -1,5 +1,6 @@
 package com.ikoembe.study.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,10 +23,23 @@ import java.util.Set;
 @Document(value = "users")
 @Getter @Setter @NoArgsConstructor @ToString
 public class User {
+  public static final String FIELD_ID = "id";
+  public static final String FIELD_USERNAME = "username";
+  public static final String FIELD_FIRSTNAME = "firstname";
+  public static final String FIELD_MIDDLENAME = "middlename";
+  public static final String FIELD_LASTNAME = "lastname";
+  public static final String FIELD_EMAIL = "email";
+  public static final String FIELD_PASSWORD = "password";
+  public static final String FIELD_ROLES = "roles.name";
+  public static final String FIELD_PHOTOURL = "photoUrl";
+  public static final String FIELD_DOB = "birthdate";
+  public static final String FIELD_GENDER = "gender";
+  public static final String FIELD_CREATEDDATE = "createdDate";
+  public static final String FIELD_LASTSIGNIN = "lastSignIn";
+
+
   @Id
   private String id;
-  
-  private String userId;
 
   @NotNull
   @Size(max = 20)
@@ -53,13 +67,14 @@ public class User {
   @Size(max = 120)
   private String password;
 
-  @DBRef
+//  @DBRef
   private Set<Role> roles = new HashSet<>();
 
   private String photoUrl;
 
   @Indexed
   @NotNull
+  @JsonFormat (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   private LocalDate birthdate;
 
   @Indexed

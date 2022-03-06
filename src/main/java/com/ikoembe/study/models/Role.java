@@ -10,8 +10,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(value = "roles")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor
 public class Role {
-  @Id
-  private String id;
+//  @Id
+//  private String id;
 
   private ERole name;
 
