@@ -126,7 +126,7 @@ public class UserController {
         user.setCreatedDate(createdDate);
         userRepository.save(user);
         return ResponseEntity.ok(new UserResponse(
-                user.getId(), user.getUsername(), user.getFirstname(),
+                user.getAccountId(), user.getUsername(), user.getFirstname(),
                 user.getMiddlename(), user.getLastname(), user.getEmail(),
                 user.getRoles(), user.getBirthdate(), user.getGender(),
                 user.getCreatedDate()

@@ -24,6 +24,7 @@ import java.util.Set;
 @Getter @Setter @NoArgsConstructor @ToString
 public class User {
   public static final String FIELD_ID = "id";
+  public static final String FIELD_ACCOUNTID = "accountId";
   public static final String FIELD_USERNAME = "username";
   public static final String FIELD_FIRSTNAME = "firstname";
   public static final String FIELD_MIDDLENAME = "middlename";
@@ -40,6 +41,8 @@ public class User {
 
   @Id
   private String id;
+
+  private String accountId;
 
   @NotNull
   @Size(max = 20)
