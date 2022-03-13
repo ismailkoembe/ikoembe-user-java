@@ -1,6 +1,7 @@
 package com.ikoembe.study.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ikoembe.study.payload.request.GuardianInfo;
 import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,6 +19,8 @@ import javax.validation.constraints.Size;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Document(value = "users")
@@ -35,6 +38,13 @@ public class User {
   public static final String FIELD_PHOTOURL = "photoUrl";
   public static final String FIELD_DOB = "birthdate";
   public static final String FIELD_GENDER = "gender";
+  public static final String FIELD_GUARDIANS = "guardians";
+  public static final String FIELD_GUARDIANINFO = "guardian";
+  public static final String FIELD_GUARDIAN_FIRSTNAME = "guardian.firstname";
+  public static final String FIELD_GUARDIAN_LASTNAME = "guardian.lastname";
+  public static final String FIELD_GUARDIAN_MIDDLENAME = "guardian.middlename";
+  public static final String FIELD_GUARDIAN_USERNAME = "guardian.username";
+  public static final String FIELD_GUARDIAN_ADDRESS = "guardian.address";
   public static final String FIELD_CREATEDDATE = "createdDate";
   public static final String FIELD_LASTSIGNIN = "lastSignIn";
 
@@ -42,9 +52,12 @@ public class User {
   @Id
   private String id;
 
+  @NotNull
+  @Indexed(unique = true)
   private String accountId;
 
   @NotNull
+  @Indexed(unique = true)
   @Size(max = 20)
   private String username;
 
@@ -59,7 +72,6 @@ public class User {
   @NotBlank
   @Size(max = 20)
   private String lastname;
-
 
   @NotBlank
   @Size(max = 50)
@@ -76,12 +88,22 @@ public class User {
   private String photoUrl;
 
   @Indexed
+  @Nullable
+  private List<GuardianInfo> guardianInfos;
+
+  @Nullable
+  private List<String> guardiansAccountIds;
+
+  @Indexed
   @NotNull
   @JsonFormat (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   private LocalDate birthdate;
 
   @Indexed
   private Gender gender;
+
+  @Nullable
+  private Address address;
 
   @NotNull
   private LocalDateTime createdDate;
@@ -94,5 +116,12 @@ public class User {
     this.username = username;
     this.email = email;
     this.password = password;
+  }
+
+  public User(String accountId, String username, String password, Set<Role> roles) {
+    this.accountId = accountId;
+    this.username = username;
+    this.password = password;
+    this.roles = roles;
   }
 }

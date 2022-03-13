@@ -1,6 +1,7 @@
 package com.ikoembe.study.controller;
 
 import com.ikoembe.study.models.Gender;
+import com.ikoembe.study.payload.request.GuardianInfo;
 import com.ikoembe.study.payload.response.MessageResponse;
 import com.ikoembe.study.payload.response.UserResponse;
 import com.ikoembe.study.repository.RoleRepository;
@@ -13,6 +14,7 @@ import com.ikoembe.study.service.UserImplementation;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -86,24 +88,40 @@ public class UserController {
                 strRoles.forEach(role -> {
                     switch (role.getName()) {
                         case ROLE_ADMIN:
-                            log.info("A new {} {} added", role.getName(), user.getUsername());
                             Role userRole = roleRepository.findByName(ERole.ROLE_ADMIN)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                             roles.add(userRole);
+                            log.info("A new {} {} added", role.getName(), user.getUsername());
                             break;
 
                         case ROLE_STUDENT:
-                            log.info("A new {} {} added", role.getName(), user.getUsername());
                             userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            if(user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(18)))){
+                                if(user.getGuardianInfos()==null||user.getGuardianInfos().size()==0){
+                                    log.error("Students who younger than 18 should be associated at least one guardian");
+                                    //TODO : throw an error
+                                    break;
+                                }else {
+                                    //TODO: Verify that guardian info is valid, if it is not handle NPE
+                                    List<String>guardiansAccountId = new ArrayList<>();
+                                    for (GuardianInfo guardianInfo : user.getGuardianInfos()) {
+                                        guardiansAccountId.add(getGuardiansAccountIds(guardianInfo));
+                                    }
+                                    user.setGuardiansAccountIds(guardiansAccountId);
+                                }
+
+                            };
+
                             roles.add(userRole);
+                            log.info("A new {} {} added", role.getName(), user.getUsername());
                             break;
 
                         case ROLE_GUARDIAN:
-                            log.info("A new {} {} added", role.getName(), user.getUsername());
                             userRole = roleRepository.findByName(ERole.ROLE_GUARDIAN)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                             roles.add(userRole);
+                            log.info("A new {} {} added", role.getName(), user.getUsername());
                             break;
 
                         case ROLE_TEACHER:
@@ -134,14 +152,15 @@ public class UserController {
         ));
     }
 
-
+    public String getGuardiansAccountIds(GuardianInfo guardianInfo){
+        return userImplementation.getGuardianAccountId(guardianInfo);
+    }
 
 
     @GetMapping ("/byGender")
     @PreAuthorize("hasRole('ADMIN')")
     public List<User> getUsersByGender(@Valid @RequestHeader Gender gender){
-        List<User> byGender = userRepository.findAllByGender(gender);
-        return byGender;
+        return userRepository.findAllByGender(gender);
     }
 
     @GetMapping ("/role")
@@ -163,21 +182,22 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    @GetMapping ("/ByAge")
+    @GetMapping ("/ByAgeAndRole")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> findUserByAge(@Valid @RequestHeader int age, @RequestHeader String lastname){
-        return userImplementation.findUserByAge(age, lastname);
+    public List<User> findUserByAge(@Valid @RequestHeader int age, @RequestHeader String role){
+        return userImplementation.findUserByAgeAndRole(age, role);
     }
 
 
-    @GetMapping("/bla")
+    @GetMapping("/studentByAge")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User>findStudentByAge(int years){
+    public List<User>findStudentByAge(int olderThan){
         List<User> allStudents = getUsersByRole(ERole.ROLE_STUDENT.toString());
         List<User> eligibleStudents=  allStudents.stream().filter(user ->
-            user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now()))
+            user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(olderThan)))
         ).collect(Collectors.toList());
         return eligibleStudents;
     }
+
 
 }

@@ -9,7 +9,10 @@ import lombok.Setter;
 @Setter
 public class Address {
     private String city;
+    private String zipcode;
     private String country;
     private String street;
+    private String number;
     private String phoneNumber;
+    private String mobileNumber;
 }
