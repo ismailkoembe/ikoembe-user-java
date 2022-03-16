@@ -138,7 +138,8 @@ public class UserController {
                 });
             }
 
-
+        UUID uuid = UUID.randomUUID();
+        user.setAccountId(uuid.toString());
         user.setRoles(roles);
         user.setPassword(encoder.encode(user.getPassword()));
         user.setCreatedDate(createdDate);
@@ -159,45 +160,90 @@ public class UserController {
 
     @GetMapping ("/byGender")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> getUsersByGender(@Valid @RequestHeader Gender gender){
-        return userRepository.findAllByGender(gender);
+    public ResponseEntity<?> getUsersByGender(@Valid @RequestHeader Gender gender){
+        List<User> user = userRepository.findAllByGender(gender);
+        List<UserResponse> userResponses = new ArrayList<>();
+        for( User userX : user) {
+            userResponses.add(new UserResponse(
+                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
+                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
+                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getCreatedDate()));
+        }
+        return ResponseEntity.ok(userResponses);
     }
 
     @GetMapping ("/role")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> getUsersByRole(@Valid @RequestHeader String role){
-        return userImplementation.findUserByRole(role);
+    public ResponseEntity<?> getUsersByRole(@Valid @RequestHeader String role){
+        List<User> userByRole = userImplementation.findUserByRole(role);
+        List<UserResponse> userResponses = new ArrayList<>();
+        for( User userX : userByRole) {
+            userResponses.add(new UserResponse(
+                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
+                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
+                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getCreatedDate()));
+        }
+        return ResponseEntity.ok(userResponses);
     }
 
     @PatchMapping(path = "/update/username/{username}")
     @ApiOperation(value = "Patches a user's information with username")
-    public ResponseEntity<User> patchStudentInfoBySchoolAccount(@PathVariable String username, @RequestBody Map<String, Object> patches){
-        User user = userRepository.findByUsername(username);
-        patches.forEach((k,v)-> {
-            Field field = ReflectionUtils.findField(User.class, k);
-            field.setAccessible(true);
-            ReflectionUtils.setField(field,user, v);
-        });
-        this.userRepository.save(user);
-        return ResponseEntity.ok(user);
+    public ResponseEntity<?> patchStudentInfoBySchoolAccount(@PathVariable String username, @RequestBody Map<String, Object> patches){
+        try {
+            User user = userRepository.findByUsername(username);
+            patches.forEach((k,v)-> {
+                Field field = ReflectionUtils.findField(User.class, k);
+                field.setAccessible(true);
+                ReflectionUtils.setField(field,user, v);
+            });
+            this.userRepository.save(user);
+            return ResponseEntity.ok(
+                    new UserResponse(
+                            user.getAccountId(), user.getUsername(), user.getFirstname(),
+                            user.getMiddlename(), user.getLastname(), user.getEmail(),
+                            user.getRoles(), user.getBirthdate(), user.getGender(),
+                            user.getCreatedDate() )
+            );
+        }catch (Exception e){
+            log.error("Username is not found");
+        }
+        return ResponseEntity.ok().body("Username is not exists in database");
+
     }
 
     @GetMapping ("/ByAgeAndRole")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User> findUserByAge(@Valid @RequestHeader int age, @RequestHeader String role){
-        return userImplementation.findUserByAgeAndRole(age, role);
+    public ResponseEntity<?> findUserByAge(@Valid @RequestHeader int age, @RequestHeader String role) {
+        List<User> userByAgeAndRole = userImplementation.findUserByAgeAndRole(age, role);
+        List<UserResponse> userResponses = new ArrayList<>();
+        for (User userX : userByAgeAndRole) {
+            userResponses.add(new UserResponse(
+                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
+                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
+                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getCreatedDate()));
+        }
+        return ResponseEntity.ok(userResponses);
     }
-
 
     @GetMapping("/studentByAge")
     @PreAuthorize("hasRole('ADMIN')")
-    public List<User>findStudentByAge(int olderThan){
-        List<User> allStudents = getUsersByRole(ERole.ROLE_STUDENT.toString());
-        List<User> eligibleStudents=  allStudents.stream().filter(user ->
-            user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(olderThan)))
+    public ResponseEntity<?>findStudentByAge(int olderThan) {
+        List<User> allStudents = userImplementation.findUserByRole(ERole.ROLE_STUDENT.toString());
+        List<User> eligibleStudents = allStudents.stream().filter(user ->
+                user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(olderThan)))
         ).collect(Collectors.toList());
-        return eligibleStudents;
+        List<UserResponse> userResponses = new ArrayList<>();
+        for (User userX : eligibleStudents) {
+            userResponses.add(new UserResponse(
+                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
+                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
+                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getCreatedDate()));
+        }
+        return ResponseEntity.ok(userResponses);
     }
-
 
 }
