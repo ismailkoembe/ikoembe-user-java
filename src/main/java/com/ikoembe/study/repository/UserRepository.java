@@ -7,6 +7,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserRepository extends MongoRepository<User, String> {
@@ -28,5 +29,7 @@ public interface UserRepository extends MongoRepository<User, String> {
     List<User> findAllByRoles(ERole role);
 
     List<User> findAllByLastname(String lastname);
+
+    Optional<User>findByAccountId(String accountId);
 
 }

@@ -12,6 +12,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -52,7 +53,6 @@ public class User {
   @Id
   private String id;
 
-  @NotNull
   @Indexed(unique = true)
   private String accountId;
 
@@ -78,7 +78,7 @@ public class User {
   @Email
   private String email;
 
-  @NotBlank
+  @NotBlank(message = "Password shouldn't be blank")
   @Size(max = 120)
   private String password;
 
@@ -87,27 +87,25 @@ public class User {
 
   private String photoUrl;
 
-  @Indexed
-  @Nullable
-  private List<GuardianInfo> guardianInfos;
+  private boolean isGuardianRequired = false;
 
   @Nullable
   private List<String> guardiansAccountIds;
 
   @Indexed
-  @NotNull
   @JsonFormat (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
   private LocalDate birthdate;
 
   @Indexed
   private Gender gender;
 
-  @Nullable
+  @NotBlank
   private Address address;
 
   @NotNull
   private LocalDateTime createdDate;
 
+  @Indexed
   @Nullable
   private LocalDateTime lastSignIn;
 

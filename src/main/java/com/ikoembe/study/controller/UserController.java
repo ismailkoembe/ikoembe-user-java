@@ -2,6 +2,7 @@ package com.ikoembe.study.controller;
 
 import com.ikoembe.study.models.Gender;
 import com.ikoembe.study.payload.request.GuardianInfo;
+import com.ikoembe.study.payload.request.UserRequest;
 import com.ikoembe.study.payload.response.MessageResponse;
 import com.ikoembe.study.payload.response.UserResponse;
 import com.ikoembe.study.repository.RoleRepository;
@@ -11,19 +12,21 @@ import com.ikoembe.study.models.ERole;
 import com.ikoembe.study.models.Role;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.service.UserImplementation;
+import com.ikoembe.study.util.ErrorResponse;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.repository.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.*;
@@ -51,6 +54,9 @@ public class UserController {
 
     @Autowired
     UserImplementation userImplementation;
+
+    @Autowired
+    ErrorResponse error;
 
 
     @PostMapping("/create")
@@ -80,7 +86,7 @@ public class UserController {
         }
         if (strRoles.size()>1 && strRoles.stream().filter(r -> r.getName().name().equals("ROLE_STUDENT"))
                 .collect(Collectors.toList())
-                .size() == 1) {
+                .size() >= 1) {
             log.error("Students cannot have multiple roles");
             return ResponseEntity.badRequest().body("Error: Students cannot have multiple roles");
         }
@@ -97,22 +103,9 @@ public class UserController {
                         case ROLE_STUDENT:
                             userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                            if(user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(18)))){
-                                if(user.getGuardianInfos()==null||user.getGuardianInfos().size()==0){
-                                    log.error("Students who younger than 18 should be associated at least one guardian");
-                                    //TODO : throw an error
-                                    break;
-                                }else {
-                                    //TODO: Verify that guardian info is valid, if it is not handle NPE
-                                    List<String>guardiansAccountId = new ArrayList<>();
-                                    for (GuardianInfo guardianInfo : user.getGuardianInfos()) {
-                                        guardiansAccountId.add(getGuardiansAccountIds(guardianInfo));
-                                    }
-                                    user.setGuardiansAccountIds(guardiansAccountId);
-                                }
-
-                            };
-
+                            if(!isStudentOlderThan(user.getBirthdate(), 18)){
+                                user.setGuardianRequired(true);
+                            }
                             roles.add(userRole);
                             log.info("A new {} {} added", role.getName(), user.getUsername());
                             break;
@@ -137,24 +130,56 @@ public class UserController {
                     }
                 });
             }
+            UUID uuid = UUID.randomUUID();
+            user.setAccountId(uuid.toString());
+            user.setRoles(roles);
+            user.setPassword(encoder.encode(user.getPassword()));
+            user.setCreatedDate(createdDate);
+            userRepository.save(user);
 
-        UUID uuid = UUID.randomUUID();
-        user.setAccountId(uuid.toString());
-        user.setRoles(roles);
-        user.setPassword(encoder.encode(user.getPassword()));
-        user.setCreatedDate(createdDate);
-        userRepository.save(user);
-        return ResponseEntity.ok(new UserResponse(
-                user.getAccountId(), user.getUsername(), user.getFirstname(),
-                user.getMiddlename(), user.getLastname(), user.getEmail(),
-                user.getRoles(), user.getBirthdate(), user.getGender(),
-                user.getCreatedDate()
+            if(user.isGuardianRequired()) {
+                return ResponseEntity.status(201).body(new UserResponse(
+                        user.getAccountId(),
+                        user.isGuardianRequired(),
+                        user.getCreatedDate()));
+            }else
+            return ResponseEntity.ok(new UserResponse(
+                    user.getAccountId(),
+                    user.isGuardianRequired(),
+                    user.getCreatedDate()
 
-        ));
+            ));
     }
 
-    public String getGuardiansAccountIds(GuardianInfo guardianInfo){
-        return userImplementation.getGuardianAccountId(guardianInfo);
+    @PostMapping("/addGuardian")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiOperation("Client should call this endpoint if student is younger than 18")
+    public ResponseEntity<?>addGuardian(@Valid @RequestBody List<GuardianInfo> guardianInfo,@RequestHeader String accountId){
+        List<String>guardiansAccountId = new ArrayList<>();
+        User student = userRepository.findByAccountId(accountId).orElseThrow(
+                ()->new RuntimeException("AccountId is not found in database"));
+        for (GuardianInfo guardianInfos : guardianInfo) {
+                    User guardian = userRepository.findByAccountId(guardianInfos.getAccountId())
+                            .orElseThrow(() -> new RuntimeException("Guardian is not found"));
+                    guardiansAccountId.add(guardian.getAccountId());
+                }
+                log.info("{} added for student {}", guardiansAccountId, student.getAccountId());
+                student.setGuardiansAccountIds(guardiansAccountId);
+        return ResponseEntity.ok( guardiansAccountId +"added for "+ student.getAccountId());
+    }
+
+
+
+    @GetMapping("/allGuardians")
+    @PreAuthorize("hasRole('ADMIN')")
+    @ApiOperation("Client should call this api to get all guardian info thus guardian can be associated for student")
+    public List<User> getAllGuardians(@RequestHeader String role){
+        List<User> guardians = userImplementation.findUserByRole(role);
+        return guardians;
+    }
+
+    public boolean isStudentOlderThan(LocalDate dob, int year){
+        return dob.isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(year)));
     }
 
 
@@ -165,9 +190,8 @@ public class UserController {
         List<UserResponse> userResponses = new ArrayList<>();
         for( User userX : user) {
             userResponses.add(new UserResponse(
-                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
-                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
-                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getAccountId(),
+                    userX.isGuardianRequired(),
                     userX.getCreatedDate()));
         }
         return ResponseEntity.ok(userResponses);
@@ -180,9 +204,8 @@ public class UserController {
         List<UserResponse> userResponses = new ArrayList<>();
         for( User userX : userByRole) {
             userResponses.add(new UserResponse(
-                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
-                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
-                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getAccountId(),
+                    userX.isGuardianRequired(),
                     userX.getCreatedDate()));
         }
         return ResponseEntity.ok(userResponses);
@@ -201,9 +224,8 @@ public class UserController {
             this.userRepository.save(user);
             return ResponseEntity.ok(
                     new UserResponse(
-                            user.getAccountId(), user.getUsername(), user.getFirstname(),
-                            user.getMiddlename(), user.getLastname(), user.getEmail(),
-                            user.getRoles(), user.getBirthdate(), user.getGender(),
+                            user.getAccountId(),
+                            user.isGuardianRequired(),
                             user.getCreatedDate() )
             );
         }catch (Exception e){
@@ -220,9 +242,8 @@ public class UserController {
         List<UserResponse> userResponses = new ArrayList<>();
         for (User userX : userByAgeAndRole) {
             userResponses.add(new UserResponse(
-                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
-                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
-                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getAccountId(),
+                    userX.isGuardianRequired(),
                     userX.getCreatedDate()));
         }
         return ResponseEntity.ok(userResponses);
@@ -238,12 +259,12 @@ public class UserController {
         List<UserResponse> userResponses = new ArrayList<>();
         for (User userX : eligibleStudents) {
             userResponses.add(new UserResponse(
-                    userX.getAccountId(), userX.getUsername(), userX.getFirstname(),
-                    userX.getMiddlename(), userX.getLastname(), userX.getEmail(),
-                    userX.getRoles(), userX.getBirthdate(), userX.getGender(),
+                    userX.getAccountId(),
+                    userX.isGuardianRequired(),
                     userX.getCreatedDate()));
         }
         return ResponseEntity.ok(userResponses);
     }
+
 
 }

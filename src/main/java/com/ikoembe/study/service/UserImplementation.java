@@ -1,19 +1,24 @@
 package com.ikoembe.study.service;
 
+import com.ikoembe.study.models.ERole;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.GuardianInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.mongodb.core.ExecutableFindOperation;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
+import static org.springframework.data.mongodb.core.query.Query.query;
 
 @Service
 public class UserImplementation {
@@ -32,7 +37,7 @@ public class UserImplementation {
     }
 
     public List<User> findUserByRole(String role) {
-        Query query = new Query();
+        final Query query = new Query();
         query.addCriteria(where(User.FIELD_ROLES).is(role));
         return mongoTemplate.find(query, User.class);
     }
@@ -42,13 +47,10 @@ public class UserImplementation {
      * verify if guardians exits/match or not
      * If we change the approach this method should be improved and used
      * */
-    public String getGuardianAccountId(GuardianInfo guardianInfo) {
-        Query query = new Query();
-        Criteria criteria = where(User.FIELD_USERNAME).is(guardianInfo.getUsername());
-        query.addCriteria(criteria);
-        List<User> guardians = mongoTemplate.find(query, User.class);
-//        guardians.forEach(x-> guardianAccountIds.add(x.getAccountId()));
-        return guardians.get(0).getAccountId();
+    public List<String> getGuardiansAccountId(GuardianInfo guardianInfo) {
+        List<User> guardians = findUserByRole("ROLE_GUARDIAN");
+                List<String> accountIds =new ArrayList<>();
+        guardians.stream().forEach(x-> accountIds.add(x.getAccountId()));
+        return accountIds;
     }
-
 }

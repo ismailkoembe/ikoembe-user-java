@@ -13,15 +13,8 @@ import java.util.Set;
 
 @Getter @Setter @AllArgsConstructor
 public class UserResponse {
-    private String userId;
-    private String username;
-    private String firstname;
-    private String middlename;
-    private String lastname;
-    private String email;
-    private Set<Role> roles = new HashSet<>();
-    private LocalDate birthdate;
-    private Gender gender;
+    private String accountId;
+    private boolean isGuardianRequired;
     private LocalDateTime createdDate;
 
 }
