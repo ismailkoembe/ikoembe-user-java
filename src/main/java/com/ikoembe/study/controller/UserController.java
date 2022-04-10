@@ -2,7 +2,6 @@ package com.ikoembe.study.controller;
 
 import com.ikoembe.study.models.Gender;
 import com.ikoembe.study.payload.request.GuardianInfo;
-import com.ikoembe.study.payload.request.UserRequest;
 import com.ikoembe.study.payload.response.MessageResponse;
 import com.ikoembe.study.payload.response.UserResponse;
 import com.ikoembe.study.repository.RoleRepository;
@@ -16,10 +15,10 @@ import com.ikoembe.study.util.ErrorResponse;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
@@ -30,6 +29,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -63,47 +63,49 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
         LocalDateTime createdDate = LocalDateTime.now();
-        if (userRepository.existsByUsername(user.getUsername())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Username is already taken!"));
-        }
+        AtomicBoolean isAdult = new AtomicBoolean(true);
+            if (userRepository.existsByUsername(user.getUsername())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(new MessageResponse("Error: Username is already taken!"));
+            }
 
-        if (user.getEmail()!=null && userRepository.existsByEmail(user.getEmail())) {
-            return ResponseEntity
-                    .badRequest()
-                    .body(new MessageResponse("Error: Email is already in use!"));
-        }
+            if (user.getEmail() != null && userRepository.existsByEmail(user.getEmail())) {
+                return ResponseEntity
+                        .badRequest()
+                        .body(new MessageResponse("Error: Email is already in use!"));
+            }
 
-        log.info("A new user object created {} {}",user.getUsername(), user.getRoles());
+            Set<Role> strRoles = user.getRoles();
+            Set<Role> roles = new HashSet<>();
 
-        Set<Role> strRoles = user.getRoles();
-        Set<Role> roles = new HashSet<>();
-
-        if (strRoles.size()==0) {
-            log.error("Role shouldn't be null");
-            return ResponseEntity.badRequest().body("Error: Role shouldn't be null");
-        }
-        if (strRoles.size()>1 && strRoles.stream().filter(r -> r.getName().name().equals("ROLE_STUDENT"))
-                .collect(Collectors.toList())
-                .size() >= 1) {
-            log.error("Students cannot have multiple roles");
-            return ResponseEntity.badRequest().body("Error: Students cannot have multiple roles");
-        }
-        if (strRoles.size()>=1){
+            if (strRoles.size() == 0) {
+                log.error("Role shouldn't be null");
+                return ResponseEntity.badRequest().body("Error: Role shouldn't be null");
+            }
+            if (strRoles.size() > 1 && strRoles.stream().filter(r -> r.getName().name().equals("ROLE_STUDENT"))
+                    .collect(Collectors.toList())
+                    .size() >= 1) {
+                log.error("Students cannot have multiple roles");
+                return ResponseEntity.badRequest().body("Error: Students cannot have multiple roles");
+            }
+            if (strRoles.size() >= 1) {
                 strRoles.forEach(role -> {
                     switch (role.getName()) {
                         case ROLE_ADMIN:
-                            Role userRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                            roles.add(userRole);
-                            log.info("A new {} {} added", role.getName(), user.getUsername());
+                            if (isUserOlderThan(user.getBirthdate(), 18)) {
+                                Role userRole = roleRepository.findByName(ERole.ROLE_ADMIN)
+                                        .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                                roles.add(userRole);
+                                log.info("A new {} {} added", role.getName(), user.getUsername());
+                            }else {
+                                isAdult.set(false);
+                                error.throwAnError("Admins, Teachers or Guardians should be older than 18");}
                             break;
-
                         case ROLE_STUDENT:
-                            userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
+                            Role userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                            if(!isStudentOlderThan(user.getBirthdate(), 18)){
+                            if (!isUserOlderThan(user.getBirthdate(), 18)) {
                                 user.setGuardianRequired(true);
                             }
                             roles.add(userRole);
@@ -111,53 +113,62 @@ public class UserController {
                             break;
 
                         case ROLE_GUARDIAN:
-                            userRole = roleRepository.findByName(ERole.ROLE_GUARDIAN)
-                                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                            roles.add(userRole);
-                            log.info("A new {} {} added", role.getName(), user.getUsername());
-                            break;
-
-                        case ROLE_TEACHER:
+                            if (isUserOlderThan(user.getBirthdate(), 18)) {
+                                userRole = roleRepository.findByName(ERole.ROLE_GUARDIAN)
+                                        .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                                roles.add(userRole);
+                                log.info("A new {} {} added", role.getName(), user.getUsername());
+                            }else{
+                                isAdult.set(false);
+                                error.throwAnError("Admins, Teachers or Guardians should be older than 18");}
+                                break;
+                    case ROLE_TEACHER:
+                        if (isUserOlderThan(user.getBirthdate(), 18)) {
                             log.info("A new {} {} added", role.getName(), user.getUsername());
                             userRole = roleRepository.findByName(ERole.ROLE_TEACHER)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                             roles.add(userRole);
-                            break;
-
+                        }else{
+                            isAdult.set(false);
+                            error.throwAnError("Admins, Teachers or Guardians should be older than 18");}
+                        break;
                         default:
                             log.error("Error: Role {} is not found", role.getName());
                             throw new RuntimeException("Error: Role is not found");
                     }
                 });
             }
-            UUID uuid = UUID.randomUUID();
-            user.setAccountId(uuid.toString());
-            user.setRoles(roles);
-            user.setPassword(encoder.encode(user.getPassword()));
-            user.setCreatedDate(createdDate);
-            userRepository.save(user);
+            if(isAdult.get()) {
+                UUID uuid = UUID.randomUUID();
+                user.setAccountId(uuid.toString());
+                user.setRoles(roles);
+                user.setPassword(encoder.encode(user.getPassword()));
+                user.setCreatedDate(createdDate);
+                userRepository.save(user);
 
-            if(user.isGuardianRequired()) {
-                return ResponseEntity.status(201).body(new UserResponse(
-                        user.getAccountId(),
-                        user.isGuardianRequired(),
-                        user.getCreatedDate()));
-            }else
-            return ResponseEntity.ok(new UserResponse(
-                    user.getAccountId(),
-                    user.isGuardianRequired(),
-                    user.getCreatedDate()
+                if (user.isGuardianRequired()) {
+                    return ResponseEntity.status(201).body(new UserResponse(
+                            user.getAccountId(),
+                            user.isGuardianRequired(),
+                            user.getCreatedDate()));
+                } else
+                    return ResponseEntity.ok(new UserResponse(
+                            user.getAccountId(),
+                            user.isGuardianRequired(),
+                            user.getCreatedDate()
 
-            ));
+                    ));
+            }
+            else return ResponseEntity.status(400).body(error.throwAnError("Admins, Teachers or Guardians should be older than 18"));
     }
 
     @PostMapping("/addGuardian")
     @PreAuthorize("hasRole('ADMIN')")
     @ApiOperation("Client should call this endpoint if student is younger than 18")
-    public ResponseEntity<?>addGuardian(@Valid @RequestBody List<GuardianInfo> guardianInfo,@RequestHeader String accountId){
+    public ResponseEntity<?>addGuardian(@Valid @RequestBody List<GuardianInfo> guardianInfo, @Valid String studentAccountId){
         List<String>guardiansAccountId = new ArrayList<>();
-        User student = userRepository.findByAccountId(accountId).orElseThrow(
-                ()->new RuntimeException("AccountId is not found in database"));
+        User student = userRepository.findByAccountId(studentAccountId).orElseThrow(
+                ()->new RuntimeException("Student is not found in database"));
         for (GuardianInfo guardianInfos : guardianInfo) {
                     User guardian = userRepository.findByAccountId(guardianInfos.getAccountId())
                             .orElseThrow(() -> new RuntimeException("Guardian is not found"));
@@ -165,7 +176,8 @@ public class UserController {
                 }
                 log.info("{} added for student {}", guardiansAccountId, student.getAccountId());
                 student.setGuardiansAccountIds(guardiansAccountId);
-        return ResponseEntity.ok( guardiansAccountId +"added for "+ student.getAccountId());
+                userRepository.save(student);
+        return ResponseEntity.ok( guardiansAccountId +"added for /n"+ student.getAccountId());
     }
 
 
@@ -173,12 +185,17 @@ public class UserController {
     @GetMapping("/allGuardians")
     @PreAuthorize("hasRole('ADMIN')")
     @ApiOperation("Client should call this api to get all guardian info thus guardian can be associated for student")
-    public List<User> getAllGuardians(@RequestHeader String role){
-        List<User> guardians = userImplementation.findUserByRole(role);
-        return guardians;
+    public ResponseEntity<?> getAllGuardians(@RequestHeader String role){
+        List<User> guardiansList = userImplementation.findUserByRole(role);
+        List<UserResponse> guardians = new ArrayList<>();
+        guardiansList.forEach(g->guardians.add(new UserResponse(
+                g.getAccountId(),
+                g.isGuardianRequired(),
+                g.getCreatedDate())));
+         return ResponseEntity.ok(guardians);
     }
 
-    public boolean isStudentOlderThan(LocalDate dob, int year){
+    public boolean isUserOlderThan(LocalDate dob, int year){
         return dob.isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(year)));
     }
 
