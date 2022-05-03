@@ -3,6 +3,7 @@ package com.ikoembe.study.controller;
 import com.ikoembe.study.models.Gender;
 import com.ikoembe.study.payload.request.GuardianInfo;
 import com.ikoembe.study.payload.response.MessageResponse;
+import com.ikoembe.study.payload.response.RegistrationDetails;
 import com.ikoembe.study.payload.response.UserResponse;
 import com.ikoembe.study.repository.RoleRepository;
 import com.ikoembe.study.repository.UserRepository;
@@ -14,8 +15,8 @@ import com.ikoembe.study.service.UserImplementation;
 import com.ikoembe.study.util.ErrorResponse;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -59,9 +60,12 @@ public class UserController {
     ErrorResponse error;
 
 
+
+
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody User user) throws Exception {
+        String temporaryPassword = RandomStringUtils.random(12, true, true);
         LocalDateTime createdDate = LocalDateTime.now();
         AtomicBoolean isAdult = new AtomicBoolean(true);
             if (userRepository.existsByUsername(user.getUsername())) {
@@ -93,7 +97,7 @@ public class UserController {
                 strRoles.forEach(role -> {
                     switch (role.getName()) {
                         case ROLE_ADMIN:
-                            if (isUserOlderThan(user.getBirthdate(), 18)) {
+                            if (userImplementation.isUserOlderThan(user.getBirthdate(), 18)) {
                                 Role userRole = roleRepository.findByName(ERole.ROLE_ADMIN)
                                         .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                                 roles.add(userRole);
@@ -105,7 +109,7 @@ public class UserController {
                         case ROLE_STUDENT:
                             Role userRole = roleRepository.findByName(ERole.ROLE_STUDENT)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                            if (!isUserOlderThan(user.getBirthdate(), 18)) {
+                            if (!userImplementation.isUserOlderThan(user.getBirthdate(), 18)) {
                                 user.setGuardianRequired(true);
                             }
                             roles.add(userRole);
@@ -113,7 +117,7 @@ public class UserController {
                             break;
 
                         case ROLE_GUARDIAN:
-                            if (isUserOlderThan(user.getBirthdate(), 18)) {
+                            if (userImplementation.isUserOlderThan(user.getBirthdate(), 18)) {
                                 userRole = roleRepository.findByName(ERole.ROLE_GUARDIAN)
                                         .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
                                 roles.add(userRole);
@@ -123,7 +127,7 @@ public class UserController {
                                 error.throwAnError("Admins, Teachers or Guardians should be older than 18");}
                                 break;
                     case ROLE_TEACHER:
-                        if (isUserOlderThan(user.getBirthdate(), 18)) {
+                        if (userImplementation.isUserOlderThan(user.getBirthdate(), 18)) {
                             log.info("A new {} {} added", role.getName(), user.getUsername());
                             userRole = roleRepository.findByName(ERole.ROLE_TEACHER)
                                     .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
@@ -142,7 +146,7 @@ public class UserController {
                 UUID uuid = UUID.randomUUID();
                 user.setAccountId(uuid.toString());
                 user.setRoles(roles);
-                user.setPassword(encoder.encode(user.getPassword()));
+                user.setPassword(temporaryPassword);
                 user.setCreatedDate(createdDate);
                 userRepository.save(user);
 
@@ -150,12 +154,14 @@ public class UserController {
                     return ResponseEntity.status(201).body(new UserResponse(
                             user.getAccountId(),
                             user.isGuardianRequired(),
-                            user.getCreatedDate()));
+                            user.getCreatedDate(),
+                            user.isTemporarilyPassword()));
                 } else
                     return ResponseEntity.ok(new UserResponse(
                             user.getAccountId(),
                             user.isGuardianRequired(),
-                            user.getCreatedDate()
+                            user.getCreatedDate(),
+                            user.isTemporarilyPassword()
 
                     ));
             }
@@ -191,14 +197,10 @@ public class UserController {
         guardiansList.forEach(g->guardians.add(new UserResponse(
                 g.getAccountId(),
                 g.isGuardianRequired(),
-                g.getCreatedDate())));
+                g.getCreatedDate(),
+                g.isTemporarilyPassword())));
          return ResponseEntity.ok(guardians);
     }
-
-    public boolean isUserOlderThan(LocalDate dob, int year){
-        return dob.isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(year)));
-    }
-
 
     @GetMapping ("/byGender")
     @PreAuthorize("hasRole('ADMIN')")
@@ -209,7 +211,9 @@ public class UserController {
             userResponses.add(new UserResponse(
                     userX.getAccountId(),
                     userX.isGuardianRequired(),
-                    userX.getCreatedDate()));
+                    userX.getCreatedDate(),
+                    userX.isTemporarilyPassword()
+            ));
         }
         return ResponseEntity.ok(userResponses);
     }
@@ -223,7 +227,9 @@ public class UserController {
             userResponses.add(new UserResponse(
                     userX.getAccountId(),
                     userX.isGuardianRequired(),
-                    userX.getCreatedDate()));
+                    userX.getCreatedDate(),
+                    userX.isTemporarilyPassword()
+            ));
         }
         return ResponseEntity.ok(userResponses);
     }
@@ -243,8 +249,9 @@ public class UserController {
                     new UserResponse(
                             user.getAccountId(),
                             user.isGuardianRequired(),
-                            user.getCreatedDate() )
-            );
+                            user.getCreatedDate(),
+                            user.isTemporarilyPassword()
+                    ));
         }catch (Exception e){
             log.error("Username is not found");
         }
@@ -261,7 +268,9 @@ public class UserController {
             userResponses.add(new UserResponse(
                     userX.getAccountId(),
                     userX.isGuardianRequired(),
-                    userX.getCreatedDate()));
+                    userX.getCreatedDate(),
+                    userX.isTemporarilyPassword()
+            ));
         }
         return ResponseEntity.ok(userResponses);
     }
@@ -278,10 +287,82 @@ public class UserController {
             userResponses.add(new UserResponse(
                     userX.getAccountId(),
                     userX.isGuardianRequired(),
-                    userX.getCreatedDate()));
+                    userX.getCreatedDate(),
+                    userX.isTemporarilyPassword()
+            ));
         }
         return ResponseEntity.ok(userResponses);
     }
 
+    @GetMapping ("/info")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> giveUserDetails(@Valid @RequestHeader String accountId) {
+        Optional<User> user = userRepository.findByAccountId(accountId);
+        return ResponseEntity.ok(new RegistrationDetails(
+                user.get().getFirstname(),
+                user.get().getLastname(),
+                user.get().getMiddlename(),
+                user.get().getUsername(),
+                user.get().getPassword()
+        ));
+    }
+
+
+    @PatchMapping(path = "/changePassword")
+    @ApiOperation(value = "If user has temporary password, client should call force update user password")
+    public ResponseEntity<?> updatePassword(@RequestHeader String accountId, @RequestHeader String username,
+                                            @RequestBody Map<String, String> newPassword){
+        try {
+            User user = userRepository.findByAccountId(accountId, username);
+            if(user.isTemporarilyPassword()) {
+                if (newPassword.get("currentPassword").equals(user.getPassword())) {
+                    user.setPassword(encoder.encode(newPassword.get("newPassword")));
+                    user.setTemporarilyPassword(false);
+                    userRepository.save(user);
+                    return ResponseEntity.ok(
+                            new UserResponse(
+                                    user.getAccountId(),
+                                    user.isGuardianRequired(),
+                                    user.getCreatedDate(),
+                                    user.isTemporarilyPassword()
+                            ));
+                }
+                else error.throwAnError("Current Password is not correct");
+            }  else {
+                if (encoder.matches(newPassword.get("currentPassword"), user.getPassword())){
+                    log.info("Encrypted password matches user input");
+                    user.setPassword(encoder.encode(newPassword.get("newPassword")));
+                    user.setTemporarilyPassword(false);
+                    userRepository.save(user);
+                    return ResponseEntity.ok(
+                            new UserResponse(
+                                    user.getAccountId(),
+                                    user.isGuardianRequired(),
+                                    user.getCreatedDate(),
+                                    user.isTemporarilyPassword()
+                            ));
+                }
+                else error.throwAnError("Current Password is not correct");
+
+            }
+            return ResponseEntity.badRequest().body("Current password doesn't match");
+
+
+        }catch (Exception e){
+            log.error("User is not found");
+        }
+        return ResponseEntity.ok().body("User is not found");
+
+    }
+
+    @GetMapping ("/isPasswordChangeRequired")
+    @ApiOperation(value = "Client should call this to understand if user should change password")
+    public ResponseEntity<?> isPasswordChangeRequired(@Valid @RequestHeader String accountId) {
+        Optional<User> user = userRepository.findByAccountId(accountId);
+        if(user.get().isTemporarilyPassword()){
+            return ResponseEntity.ok().body("Change the password");
+        }else
+            return ResponseEntity.status(204).build();
+    }
 
 }

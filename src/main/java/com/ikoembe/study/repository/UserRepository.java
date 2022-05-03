@@ -30,6 +30,10 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     List<User> findAllByLastname(String lastname);
 
-    Optional<User>findByAccountId(String accountId);
+    Optional<User> findByAccountId(String accountId);
+
+    User findByAccountId(String accountId, String username);
+
+    Optional<List<String>> findAllByAccountId(List<String> accountIds);
 
 }

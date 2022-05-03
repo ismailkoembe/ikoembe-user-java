@@ -1,24 +1,22 @@
 package com.ikoembe.study.service;
 
-import com.ikoembe.study.models.ERole;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.GuardianInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.ExecutableFindOperation;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.chrono.ChronoLocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
-import static org.springframework.data.mongodb.core.query.Query.query;
 
 @Service
 public class UserImplementation {
@@ -52,5 +50,9 @@ public class UserImplementation {
                 List<String> accountIds =new ArrayList<>();
         guardians.stream().forEach(x-> accountIds.add(x.getAccountId()));
         return accountIds;
+    }
+
+    public boolean isUserOlderThan(LocalDate dob, int year){
+        return dob.isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(year)));
     }
 }

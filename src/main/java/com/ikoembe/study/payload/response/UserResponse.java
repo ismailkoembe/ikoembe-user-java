@@ -16,5 +16,6 @@ public class UserResponse {
     private String accountId;
     private boolean isGuardianRequired;
     private LocalDateTime createdDate;
+    private boolean isTemporarilyPassword;
 
 }
