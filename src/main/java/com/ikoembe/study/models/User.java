@@ -48,6 +48,8 @@ public class User {
   public static final String FIELD_GUARDIAN_ADDRESS = "guardian.address";
   public static final String FIELD_CREATEDDATE = "createdDate";
   public static final String FIELD_LASTSIGNIN = "lastSignIn";
+  public static final String FIELD_TEMPORARYPASSWORD = "isTemporarilyPassword";
+
 
 
   @Id
@@ -108,6 +110,9 @@ public class User {
   @Indexed
   @Nullable
   private LocalDateTime lastSignIn;
+
+  @Nullable
+  private boolean isTemporarilyPassword = true;
 
 
   public User(String username, String email, String password) {

@@ -18,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -48,6 +49,7 @@ public class AuthController {
 	@Autowired
 	JwtUtils jwtUtils;
 
+
 	@PostMapping("/signin")
 	public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 		LocalDateTime lastSignIn = LocalDateTime.now();
@@ -55,8 +57,8 @@ public class AuthController {
 
 		Authentication authentication = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+		User user = userRepository.findByUsername(loginRequest.getUsername());
 		if (authentication.isAuthenticated()){
-			User user = userRepository.findByUsername(loginRequest.getUsername());
 			user.setLastSignIn(lastSignIn);
 			userRepository.save(user);
 		}
@@ -64,11 +66,7 @@ public class AuthController {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		String jwt = jwtUtils.generateJwtToken(authentication);
 		
-		UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();		
-		List<String> roles = userDetails.getAuthorities().stream()
-				.map(item -> item.getAuthority())
-				.collect(Collectors.toList());
-
+		UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 		return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId()));
 	}
 
