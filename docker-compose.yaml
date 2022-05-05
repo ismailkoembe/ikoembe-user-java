@@ -6,7 +6,7 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - data:/data
+      - data:/data/db
     environment:
       - MONGO_INITDB_ROOT_USERNAME=rootuser
       - MONGO_INITDB_ROOT_PASSWORD=rootpass
@@ -20,8 +20,18 @@ services:
       - ME_CONFIG_MONGODB_ADMINUSERNAME=rootuser
       - ME_CONFIG_MONGODB_ADMINPASSWORD=rootpass
       - ME_CONFIG_MONGODB_SERVER=mongodb
+    depends_on:
+      - mongodb
+#  myapp:
+#    image:  ismailkoembe/mystudyapp:1.0.2
+#    container_name: ms_user_ms311
+#    ports:
+#      - 8080:8080
+#    depends_on:
+#      - mongodb
 volumes:
-  data: {}
+  data:
+    driver: local
 
 networks:
   default:
