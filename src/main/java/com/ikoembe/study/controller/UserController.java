@@ -66,6 +66,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createUser(@Valid @RequestBody User user) throws Exception {
         String temporaryPassword = RandomStringUtils.random(12, true, true);
+        log.info("temporaryPassword: " + temporaryPassword);
         LocalDateTime createdDate = LocalDateTime.now();
         AtomicBoolean isAdult = new AtomicBoolean(true);
             if (userRepository.existsByUsername(user.getUsername())) {
@@ -146,7 +147,8 @@ public class UserController {
                 UUID uuid = UUID.randomUUID();
                 user.setAccountId(uuid.toString());
                 user.setRoles(roles);
-                user.setPassword(temporaryPassword);
+                user.setPassword(encoder.encode(temporaryPassword));
+                user.setTemporarilyPass(temporaryPassword);
                 user.setCreatedDate(createdDate);
                 userRepository.save(user);
 
@@ -303,7 +305,7 @@ public class UserController {
                 user.get().getLastname(),
                 user.get().getMiddlename(),
                 user.get().getUsername(),
-                user.get().getPassword()
+                user.get().getTemporarilyPass()
         ));
     }
 
@@ -315,7 +317,7 @@ public class UserController {
         try {
             User user = userRepository.findByAccountId(accountId, username);
             if(user.isTemporarilyPassword()) {
-                if (newPassword.get("currentPassword").equals(user.getPassword())) {
+                if (encoder.matches(newPassword.get("currentPassword"), user.getPassword())) {
                     user.setPassword(encoder.encode(newPassword.get("newPassword")));
                     user.setTemporarilyPassword(false);
                     userRepository.save(user);
@@ -333,6 +335,8 @@ public class UserController {
                     log.info("Encrypted password matches user input");
                     user.setPassword(encoder.encode(newPassword.get("newPassword")));
                     user.setTemporarilyPassword(false);
+                    user.setTemporarilyPass(null);
+                    user.setLastPasswordUpdatedDate(LocalDateTime.now());
                     userRepository.save(user);
                     return ResponseEntity.ok(
                             new UserResponse(

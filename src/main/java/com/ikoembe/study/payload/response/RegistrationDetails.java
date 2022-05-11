@@ -14,5 +14,5 @@ public class RegistrationDetails {
     private String lastname;
     private String middlename;
     private String username;
-    private String password;
+    private String temporarilyPass;
 }
