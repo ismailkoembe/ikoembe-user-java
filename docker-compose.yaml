@@ -2,14 +2,17 @@ version: "3.8"
 services:
   mongodb:
     image: mongo
-    container_name: mongodb
+    container_name: mongo
     ports:
       - 27017:27017
     volumes:
-      - data:/data/db
+      - ~/docker-volume/mongo:/data/db
+    network_mode: bridge
     environment:
       - MONGO_INITDB_ROOT_USERNAME=rootuser
       - MONGO_INITDB_ROOT_PASSWORD=rootpass
+#    networks:
+#      - mongodb_network
   mongo-express:
     image: mongo-express
     container_name: mongo-express
@@ -22,17 +25,25 @@ services:
       - ME_CONFIG_MONGODB_SERVER=mongodb
     depends_on:
       - mongodb
-#  myapp:
-#    image:  ismailkoembe/mystudyapp:1.0.2
-#    container_name: ms_user_ms311
-#    ports:
-#      - 8080:8080
-#    depends_on:
-#      - mongodb
-volumes:
-  data:
-    driver: local
+  myapp:
+    image:  ismailkoembe/user_ms:1.0.11
+    container_name: user_ms_no_auth
+    ports:
+      - 8080:8080
+    depends_on:
+      - mongodb
+#    network_mode: bridge
+#
+#volumes:
+#  data:
+#    driver: local
 
-networks:
-  default:
-    name: mongodb_network
+
+
+#networks:
+#  default:
+#    name: mongodb_network
+#
+#networks:
+#  mongodb_network:
+#    driver: bridge
