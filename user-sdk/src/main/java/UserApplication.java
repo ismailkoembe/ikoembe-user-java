@@ -6,10 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.time.LocalDateTime;
 
 @SpringBootApplication
-public class StudyApplication {
+public class UserApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(StudyApplication.class, args);
+		SpringApplication.run(UserApplication.class, args);
 	}
 
 }
