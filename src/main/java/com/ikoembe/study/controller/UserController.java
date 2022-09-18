@@ -199,29 +199,22 @@ public class UserController {
     @ApiOperation("Client should call this api to get all guardian info thus guardian can be associated for student")
     public ResponseEntity<?> getAllGuardians( @RequestHeader String role){
         List<User> guardiansList = userImplementation.findUserByRole(role);
-        List<UserResponse> guardians = new ArrayList<>();
-        guardiansList.forEach(g->guardians.add(new UserResponse(
+       return ResponseEntity.ok().body(guardiansList.stream().map(g-> new UserResponse(
                 g.getAccountId(),
                 g.isGuardianRequired(),
                 g.getCreatedDate(),
                 g.isTemporarilyPassword())));
-        return ResponseEntity.ok(guardians);
     }
 
     @GetMapping ("/byGender")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUsersByGender( @Valid @RequestHeader Gender gender){
         List<User> user = userRepository.findAllByGender(gender);
-        List<UserResponse> userResponses = new ArrayList<>();
-        for( User userX : user) {
-            userResponses.add(new UserResponse(
-                    userX.getAccountId(),
-                    userX.isGuardianRequired(),
-                    userX.getCreatedDate(),
-                    userX.isTemporarilyPassword()
-            ));
-        }
-        return ResponseEntity.ok(userResponses);
+        return ResponseEntity.ok().body(user.stream().map(u->new UserResponse(
+                u.getAccountId(),
+                u.isGuardianRequired(),
+                u.getCreatedDate(),
+                u.isTemporarilyPassword())));
     }
 
     @GetMapping ("/role")
@@ -229,15 +222,13 @@ public class UserController {
     public ResponseEntity<?> getUsersByRole( @Valid @RequestHeader String role){
         List<User> userByRole = userImplementation.findUserByRole(role);
         List<UserResponse> userResponses = new ArrayList<>();
-        for( User userX : userByRole) {
-            userResponses.add(new UserResponse(
+        return ResponseEntity.ok().body(userResponses.stream().map(userX->new UserResponse(
                     userX.getAccountId(),
                     userX.isGuardianRequired(),
                     userX.getCreatedDate(),
                     userX.isTemporarilyPassword()
-            ));
-        }
-        return ResponseEntity.ok(userResponses);
+            )));
+
     }
 
     @PatchMapping(path = "/update/username/{username}")
@@ -272,15 +263,12 @@ public class UserController {
             @Valid @RequestHeader int age, @RequestHeader String role) {
             List<User> userByAgeAndRole = userImplementation.findUserByAgeAndRole(age, role);
             List<UserResponse> userResponses = new ArrayList<>();
-            for (User userX : userByAgeAndRole) {
-                userResponses.add(new UserResponse(
+        return ResponseEntity.ok().body(userResponses.stream().map(userX->new UserResponse(
                         userX.getAccountId(),
                         userX.isGuardianRequired(),
                         userX.getCreatedDate(),
-                        userX.isTemporarilyPassword()
+                        userX.isTemporarilyPassword())
                 ));
-            }
-            return ResponseEntity.ok(userResponses);
 
     }
 
@@ -293,16 +281,12 @@ public class UserController {
         List<User> eligibleStudents = allStudents.stream().filter(user ->
                 user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(olderThan)))
         ).collect(Collectors.toList());
-        List<UserResponse> userResponses = new ArrayList<>();
-        for (User userX : eligibleStudents) {
-            userResponses.add(new UserResponse(
-                    userX.getAccountId(),
-                    userX.isGuardianRequired(),
-                    userX.getCreatedDate(),
-                    userX.isTemporarilyPassword()
-            ));
-        }
-        return ResponseEntity.ok(userResponses);
+        return ResponseEntity.ok().body(eligibleStudents.stream().map(e->new UserResponse(
+                e.getAccountId(),
+                e.isGuardianRequired(),
+                e.getCreatedDate(),
+                e.isTemporarilyPassword())
+        ));
     }
 
     @GetMapping ("/info")
