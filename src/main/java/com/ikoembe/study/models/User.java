@@ -1,7 +1,6 @@
 package com.ikoembe.study.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.ikoembe.study.payload.request.GuardianInfo;
 import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,10 +8,8 @@ import lombok.Setter;
 import lombok.ToString;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -21,7 +18,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @Document(value = "users")
@@ -35,7 +31,7 @@ public class User {
   public static final String FIELD_LASTNAME = "lastname";
   public static final String FIELD_EMAIL = "email";
   public static final String FIELD_PASSWORD = "password";
-  public static final String FIELD_ROLES = "roles.name";
+  public static final String FIELD_ROLES = "roles";
   public static final String FIELD_PHOTOURL = "photoUrl";
   public static final String FIELD_DOB = "birthdate";
   public static final String FIELD_GENDER = "gender";
@@ -85,8 +81,8 @@ public class User {
   @Size(max = 120)
   private String password;
 
-//  @DBRef
-  private Set<Role> roles = new HashSet<>();
+  @Indexed
+  private Set<Roles> roles = new HashSet<>();
 
   private String photoUrl;
 
@@ -126,7 +122,7 @@ public class User {
     this.password = password;
   }
 
-  public User(String accountId, String username, String password, Set<Role> roles) {
+  public User(String accountId, String username, String password, Set<Roles> roles) {
     this.accountId = accountId;
     this.username = username;
     this.password = password;

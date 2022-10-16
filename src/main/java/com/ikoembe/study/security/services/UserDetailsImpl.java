@@ -1,6 +1,7 @@
 package com.ikoembe.study.security.services;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.ikoembe.study.models.Roles;
 import com.ikoembe.study.models.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -36,7 +37,7 @@ public class UserDetailsImpl implements UserDetails {
 
 	public static UserDetailsImpl build(User user) {
 		List<GrantedAuthority> authorities = user.getRoles().stream()
-				.map(role -> new SimpleGrantedAuthority(role.getName().name()))
+				.map((Roles role) -> new SimpleGrantedAuthority(role.name()))
 				.collect(Collectors.toList());
 
 		return new UserDetailsImpl(

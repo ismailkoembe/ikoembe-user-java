@@ -1,5 +1,6 @@
 package com.ikoembe.study.payload.request;
 
+import com.ikoembe.study.models.Roles;
 import com.mongodb.lang.Nullable;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,7 +21,7 @@ public class SignupRequest {
     @Email
     private String email;
     
-    private Set<String> roles;
+    private Set<Roles> roles;
     
     @NotBlank
     @Size(min = 6, max = 40)
