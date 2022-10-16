@@ -1,9 +1,7 @@
 package com.ikoembe.study.models;
 
-import java.security.PrivateKey;
-
-public enum ERole {
-  ROLE_ADMIN,
+public enum Roles {
+  ROLE_ADMIN ,
   ROLE_STUDENT,
   ROLE_GUARDIAN,
   ROLE_TEACHER;

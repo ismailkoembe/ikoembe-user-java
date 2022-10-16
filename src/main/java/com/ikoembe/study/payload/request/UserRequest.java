@@ -3,20 +3,16 @@ package com.ikoembe.study.payload.request;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.ikoembe.study.models.Address;
 import com.ikoembe.study.models.Gender;
-import com.ikoembe.study.models.Role;
 import com.mongodb.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,7 +44,7 @@ public class UserRequest {
     @Size(max = 120)
     private String password;
 
-    private Set<Role> roles = new HashSet<>();
+    private Set<String> roles = new HashSet<>();
 
     @Nullable
     private List<String> guardiansAccountIds;

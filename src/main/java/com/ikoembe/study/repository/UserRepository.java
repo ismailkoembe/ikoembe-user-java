@@ -1,6 +1,6 @@
 package com.ikoembe.study.repository;
 
-import com.ikoembe.study.models.ERole;
+import com.ikoembe.study.models.Roles;
 import com.ikoembe.study.models.Gender;
 import com.ikoembe.study.models.User;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -16,7 +16,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     Boolean existsByUsername(String username);
 
-    Boolean existsByRoles(ERole role);
+    Boolean existsByRoles(Roles role);
 
     Boolean existsByEmail(String email);
 
@@ -26,7 +26,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     List<User> findAllByGender(Gender gender);
 
-    List<User> findAllByRoles(ERole role);
+    List<User> findAllByRoles(Roles role);
 
     List<User> findAllByLastname(String lastname);
 
