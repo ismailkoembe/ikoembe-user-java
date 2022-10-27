@@ -19,8 +19,8 @@ import java.util.List;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 @Service
-public class UserImplementation {
-    private static final Logger log = LoggerFactory.getLogger(UserImplementation.class);
+public class UserService {
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     @Autowired
     private MongoTemplate mongoTemplate;

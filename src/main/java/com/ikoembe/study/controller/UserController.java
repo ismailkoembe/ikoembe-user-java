@@ -10,7 +10,7 @@ import com.ikoembe.study.payload.response.UserResponse;
 import com.ikoembe.study.repository.UserRepository;
 import com.ikoembe.study.security.jwt.JwtUtils;
 import com.ikoembe.study.security.services.UserDetailsImpl;
-import com.ikoembe.study.service.UserImplementation;
+import com.ikoembe.study.service.UserService;
 import com.ikoembe.study.util.ErrorResponse;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +50,7 @@ public class UserController {
     JwtUtils jwtUtils;
 
     @Autowired
-    UserImplementation userImplementation;
+    UserService userService;
 
     @Autowired
     ErrorResponse error;
@@ -97,7 +97,7 @@ public class UserController {
                     case ROLE_ADMIN:
                     case ROLE_TEACHER:
                     case ROLE_GUARDIAN:
-                        if (userImplementation.isUserOlderThan(user.getBirthdate(), 18)) {
+                        if (userService.isUserOlderThan(user.getBirthdate(), 18)) {
                             roles.add(role);
                         } else {
                             isAdult.set(false);
@@ -105,7 +105,7 @@ public class UserController {
                         }
                         break;
                     case ROLE_STUDENT:
-                        if (!userImplementation.isUserOlderThan(user.getBirthdate(), 18)) {
+                        if (!userService.isUserOlderThan(user.getBirthdate(), 18)) {
                             user.setGuardianRequired(true);
                         }
                         roles.add(role);
@@ -163,7 +163,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @ApiOperation("Client should call this api to get all guardian info thus guardian can be associated for student")
     public ResponseEntity<?> getAllGuardians(@RequestHeader String role) {
-        List<User> guardiansList = userImplementation.findUserByRole(role);
+        List<User> guardiansList = userService.findUserByRole(role);
         return ResponseEntity.ok().body(guardiansList.stream().map(g -> createUserObject(g.getAccountId(), g.isGuardianRequired(), g.getCreatedDate(), g.isTemporarilyPassword())));
     }
 
@@ -177,7 +177,7 @@ public class UserController {
     @GetMapping("/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUsersByRole(@Valid @RequestHeader String role) {
-        List<User> userByRole = userImplementation.findUserByRole(role);
+        List<User> userByRole = userService.findUserByRole(role);
         return ResponseEntity.ok().body(userByRole.stream().map(userX -> createUserObject(userX.getAccountId(), userX.isGuardianRequired(), userX.getCreatedDate(), userX.isTemporarilyPassword())));
 
     }
@@ -207,7 +207,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> findUserByAge(
             @Valid @RequestHeader int age, @RequestHeader String role) {
-        List<User> userByAgeAndRole = userImplementation.findUserByAgeAndRole(age, role);
+        List<User> userByAgeAndRole = userService.findUserByAgeAndRole(age, role);
         List<UserResponse> userResponses = new ArrayList<>();
         return ResponseEntity.ok().body(userResponses.stream().map(userX -> createUserObject(userX.getAccountId(), userX.isGuardianRequired(), userX.getCreatedDate(), userX.isTemporarilyPassword())
         ));
@@ -219,7 +219,7 @@ public class UserController {
     public ResponseEntity<?> findStudentByAge(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             int olderThan) {
-        List<User> allStudents = userImplementation.findUserByRole(Roles.ROLE_STUDENT.toString());
+        List<User> allStudents = userService.findUserByRole(Roles.ROLE_STUDENT.toString());
         List<User> eligibleStudents = allStudents.stream().filter(user ->
                 user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(olderThan)))
         ).collect(Collectors.toList());

@@ -22,7 +22,7 @@ public class DbSeeder implements CommandLineRunner {
 
     private UserRepository userRepository;
     @Autowired
-    private UserImplementation userImplementation;
+    private UserService userService;
     @Value("${admin.username}")
     private String username;
 
@@ -36,7 +36,7 @@ public class DbSeeder implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        if(userImplementation.findUserByRole("ROLE_ADMIN").size()==0){
+        if(userService.findUserByRole("ROLE_ADMIN").size()==0){
             createFirstAdminUser();
         }else log.info("Since admin user is found, new admin user creation omitted.");
 
