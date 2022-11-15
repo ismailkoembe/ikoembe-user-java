@@ -288,4 +288,11 @@ public class UserController {
             return ResponseEntity.status(204).build();
     }
 
+    @GetMapping("/findByAccountId/{accountId}")
+//    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Optional<User>> doSomething(@Valid @PathVariable String accountId) {
+        Optional<User> user = userRepository.findByAccountId(accountId);
+        return ResponseEntity.ok().body(user);
+    }
+
 }
