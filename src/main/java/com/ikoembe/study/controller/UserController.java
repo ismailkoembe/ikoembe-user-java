@@ -25,6 +25,7 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import javax.websocket.server.PathParam;
 import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
@@ -286,6 +287,13 @@ public class UserController {
             return ResponseEntity.ok().body("Change the password");
         } else
             return ResponseEntity.status(204).build();
+    }
+
+    @GetMapping("/findByAccountId/{accountId}")
+//    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Optional<User>> doSomething(@Valid @PathVariable String accountId) {
+        Optional<User> user = userRepository.findByAccountId(accountId);
+        return ResponseEntity.ok().body(user);
     }
 
 }
