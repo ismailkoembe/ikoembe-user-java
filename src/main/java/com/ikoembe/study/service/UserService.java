@@ -1,5 +1,6 @@
 package com.ikoembe.study.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.GuardianInfo;
 import org.slf4j.Logger;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
 
@@ -46,10 +48,8 @@ public class UserService {
      * If we change the approach this method should be improved and used
      * */
     public List<String> getGuardiansAccountId(GuardianInfo guardianInfo) {
-        List<User> guardians = findUserByRole("ROLE_GUARDIAN");
-                List<String> accountIds =new ArrayList<>();
-        guardians.stream().forEach(x-> accountIds.add(x.getAccountId()));
-        return accountIds;
+        return findUserByRole("ROLE_GUARDIAN").stream()
+                .map(User::getAccountId).collect(Collectors.toList());
     }
 
     public boolean isUserOlderThan(LocalDate dob, int year){
