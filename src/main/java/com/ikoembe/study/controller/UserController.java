@@ -97,15 +97,10 @@ public class UserController {
                     case ROLE_ADMIN:
                     case ROLE_TEACHER:
                     case ROLE_GUARDIAN:
-                        if (userService.isUserOlderThan(user.getBirthdate(), 18)) {
-                            roles.add(role);
-                        } else {
-                            isAdult.set(false);
-                            error.throwAnError("Admins, Teachers or Guardians should be older than 18");
-                        }
+                        isAbleToBeRegistered(user, isAdult, roles, role);
                         break;
                     case ROLE_STUDENT:
-                        if (!userService.isUserOlderThan(user.getBirthdate(), 18)) {
+                        if (!userService.isOlderThan.apply(user.getBirthdate(), 18)) {
                             user.setGuardianRequired(true);
                         }
                         roles.add(role);
@@ -127,11 +122,22 @@ public class UserController {
             log.info("A new {} {} added", user.getRoles(), user.getUsername());
 
             if (user.isGuardianRequired()) {
-                return ResponseEntity.status(201).body(createUserObject(user.getAccountId(), user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
+                return ResponseEntity.status(201).body(createUserObject(user.getAccountId(),
+                        user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
             } else
-                return ResponseEntity.ok(createUserObject(user.getAccountId(), user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
+                return ResponseEntity.ok(createUserObject(user.getAccountId(),
+                        user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
         } else
             return ResponseEntity.status(400).body(error.throwAnError("Admins, Teachers or Guardians should be older than 18"));
+    }
+
+    private void isAbleToBeRegistered(User user, AtomicBoolean isAdult, Set<Roles> roles, Roles role) {
+        if (userService.isOlderThan.apply(user.getBirthdate(), 18)) {
+            roles.add(role);
+        } else {
+            isAdult.set(false);
+            error.throwAnError("Admins, Teachers or Guardians should be older than 18");
+        }
     }
 
     private UserResponse createUserObject(String accountId, boolean guardianRequired, LocalDateTime createdDate, boolean temporarilyPassword) {
@@ -197,9 +203,9 @@ public class UserController {
             return ResponseEntity.ok(
                     createUserObject(user.getAccountId(), user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
         } catch (Exception e) {
-            log.error("Username is not found");
+            log.error("User is not found");
+            return ResponseEntity.ok().body("User is not exists in database");
         }
-        return ResponseEntity.ok().body("Username is not exists in database");
 
     }
 

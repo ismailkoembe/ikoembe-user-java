@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -52,7 +53,12 @@ public class UserService {
                 .map(User::getAccountId).collect(Collectors.toList());
     }
 
+    @Deprecated
     public boolean isUserOlderThan(LocalDate dob, int year){
         return dob.isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(year)));
     }
+
+
+    public BiFunction<LocalDate, Integer, Boolean> isOlderThan = (dob, year) ->
+            dob.isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(year)));
 }
