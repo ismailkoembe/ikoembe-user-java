@@ -22,6 +22,11 @@ services:
       - ME_CONFIG_MONGODB_SERVER=mongodb
     depends_on:
       - mongodb
+  rabbitmq:
+     image: "rabbitmq"
+     ports:
+       - "9200:9200"
+
   myapp:
     image:  ismailkoembe/user_ms:1.0.11
     container_name: myapp

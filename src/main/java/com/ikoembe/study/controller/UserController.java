@@ -1,7 +1,7 @@
 package com.ikoembe.study.controller;
 
-import com.ikoembe.study.models.Roles;
 import com.ikoembe.study.models.Gender;
+import com.ikoembe.study.models.Roles;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.GuardianInfo;
 import com.ikoembe.study.payload.response.MessageResponse;
@@ -12,6 +12,7 @@ import com.ikoembe.study.security.jwt.JwtUtils;
 import com.ikoembe.study.security.services.UserDetailsImpl;
 import com.ikoembe.study.service.UserService;
 import com.ikoembe.study.util.ErrorResponse;
+import com.ikoembe.study.util.IsAuthenticated;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -189,25 +190,54 @@ public class UserController {
     }
 
     @PatchMapping(path = "/update/username/{username}")
+    @IsAuthenticated
     @ApiOperation(value = "Patches a user's information with username")
-    public ResponseEntity<?> patchStudentInfoBySchoolAccount(
+    public ResponseEntity<?> patchUserInfo(
             @PathVariable String username, @RequestBody Map<String, Object> patches) {
         try {
             User user = userRepository.findByUsername(username);
-            patches.forEach((k, v) -> {
-                Field field = ReflectionUtils.findField(User.class, k);
-                field.setAccessible(true);
-                ReflectionUtils.setField(field, user, v);
-            });
-            this.userRepository.save(user);
-            return ResponseEntity.ok(
-                    createUserObject(user.getAccountId(), user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
+            if (user != null) {
+                Map<String, Object> validFields = patches.entrySet().stream()
+                        .filter(x -> !x.getKey().equals("accountId") && !x.getKey().equals("password")
+                                && !x.getKey().equals("roles") && !x.getKey().equals("createdDate")
+                                && !x.getKey().equals("isGuardianRequired") && !x.getKey().equals("gender")
+                                && !x.getKey().equals("adddress")
+                        )
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                validFields.forEach((k, v) -> {
+                    if (k.equals("address")) {
+                        log.warn("address can not be updated");
+                    }
+                    Field field = ReflectionUtils.findField(User.class, k);
+                    field.setAccessible(true);
+                    ReflectionUtils.setField(field, user, v);
+                });
+                this.userRepository.save(user);
+                return ResponseEntity.ok(validFields);
+            } else return ResponseEntity.badRequest().body("The user is not found");
         } catch (Exception e) {
-            log.error("User is not found");
-            return ResponseEntity.ok().body("User is not exists in database");
+            log.error("The patch field(s) is not valid");
+            return ResponseEntity.badRequest().body("The patch field(s) is not valid");
         }
 
     }
+
+    @PatchMapping(path = "/update/username/{username}/address")
+    @IsAuthenticated
+    @ApiOperation(value = "Patches a user's address information by accountId")
+    public ResponseEntity<?> patchUserAddress(
+            @PathVariable String username, @RequestBody User user,
+            @RequestHeader String accountId){
+        Optional<User> byAccountId = userRepository.findByAccountId(accountId);
+        byAccountId.get().setAddress(user.getAddress());
+        userRepository.save(byAccountId.get());
+        return ResponseEntity.ok().body(byAccountId.stream().map(
+                userX -> createUserObject(userX.getAccountId(),
+                        userX.isGuardianRequired(),
+                        userX.getCreatedDate(),
+                        userX.isTemporarilyPassword())));
+    }
+
 
     @GetMapping("/ByAgeAndRole")
     @PreAuthorize("hasRole('ADMIN')")
@@ -237,32 +267,39 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> giveUserDetails(@Valid @RequestHeader String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
-        return ResponseEntity.ok(new RegistrationDetails(
-                user.get().getFirstname(),
-                user.get().getLastname(),
-                user.get().getMiddlename(),
-                user.get().getUsername(),
-                user.get().getTemporarilyPass()
-        ));
+        if (user.isPresent()) {
+            return ResponseEntity.ok(new RegistrationDetails(
+                    user.get().getFirstname(),
+                    user.get().getLastname(),
+                    user.get().getMiddlename(),
+                    user.get().getUsername(),
+                    user.get().getTemporarilyPass()
+            ));
+        } else return ResponseEntity.badRequest().body("User is not found by accountId");
+
     }
 
 
     @PatchMapping(path = "/changePassword")
+    @IsAuthenticated
     @ApiOperation(value = "If user has temporary password, client should call force update user password")
     public ResponseEntity<?> updatePassword(@RequestHeader String accountId, @RequestHeader String username,
                                             @RequestBody Map<String, String> newPassword) {
         try {
             User user = userRepository.findByAccountId(accountId, username);
             if (user.isTemporarilyPassword()) {
+                log.info("User {}, {} attempts to change temporary password", user.getUsername(), user.getAccountId());
                 if (encoder.matches(newPassword.get("currentPassword"), user.getPassword())) {
                     user.setPassword(encoder.encode(newPassword.get("newPassword")));
                     user.setTemporarilyPassword(false);
+                    user.setTemporarilyPass(null);
                     userRepository.save(user);
                     return ResponseEntity.ok(
                             createUserObject(user.getAccountId(), user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
                 } else error.throwAnError("Current Password is not correct");
             } else {
                 if (encoder.matches(newPassword.get("currentPassword"), user.getPassword())) {
+                    log.info("User {}, {} attempts to change encrypted password", user.getUsername(), user.getAccountId());
                     log.info("Encrypted password matches user input");
                     user.setPassword(encoder.encode(newPassword.get("newPassword")));
                     user.setTemporarilyPassword(false);
@@ -285,6 +322,8 @@ public class UserController {
     }
 
     @GetMapping("/isPasswordChangeRequired")
+//    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_TEACHER')")
+    @IsAuthenticated
     @ApiOperation(value = "Client should call this to understand if user should change password")
     public ResponseEntity<?> isPasswordChangeRequired(@Valid @RequestHeader String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
