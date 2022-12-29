@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Helper {
-    public Map<String, Object> toMap(Object object) throws IllegalAccessException {
+    public Map<String, Object> classToMap(Object object) throws IllegalAccessException {
         Map<String, Object> map = new HashMap<>();
 
         Class<?> clazz = object.getClass();
