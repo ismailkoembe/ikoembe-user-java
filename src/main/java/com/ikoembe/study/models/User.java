@@ -96,7 +96,7 @@ public class User {
   private LocalDate birthdate;
 
   @Indexed
-  private Gender gender;
+  private Gender gender; //
 
   @NotBlank
   private Address address;
