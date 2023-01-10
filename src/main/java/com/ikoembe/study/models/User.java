@@ -46,6 +46,13 @@ public class User {
   public static final String FIELD_LASTSIGNIN = "lastSignIn";
   public static final String FIELD_ISTEMPORARYPASSWORD = "isTemporarilyPassword";
   public static final String FIELD_TEMPORARYPASSWORD = "temporarilyPassword";
+  public static final String FIELD_ADDRESS_CITY = "address.city";
+  public static final String FIELD_ADDRESS_ZIPCODE = "address.zipcode";
+  public static final String FIELD_ADDRESS_COUNTRY = "address.country";
+  public static final String FIELD_ADDRESS_STREET = "address.street";
+  public static final String FIELD_ADDRESS_NUMBER = "address.number";
+  public static final String FIELD_ADDRESS_PHONENUMBER = "address.phoneNumber";
+  public static final String FIELD_ADDRESS_MOBILENUMBER = "address.mobileNumber";
 
 
 
@@ -96,7 +103,7 @@ public class User {
   private LocalDate birthdate;
 
   @Indexed
-  private Gender gender; //
+  private Gender gender;
 
   @NotBlank
   private Address address;

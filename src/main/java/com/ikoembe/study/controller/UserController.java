@@ -84,7 +84,7 @@ public class UserController {
             return ResponseEntity.badRequest().body("Error: Role shouldn't be null");
         }
 
-        if (strRoles.size() > 1 && strRoles.stream().filter(r -> r.equals(Roles.ROLE_STUDENT.getName()))
+        if (strRoles.size() > 1 && strRoles.stream().filter(r -> r.equals(Roles.ROLE_STUDENT))
                 .collect(Collectors.toList())
                 .size() >= 1) {
             log.error("Students cannot have multiple roles");
@@ -205,9 +205,7 @@ public class UserController {
                         )
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                 validFields.forEach((k, v) -> {
-                    if (k.equals("address")) {
-                        log.warn("address can not be updated");
-                    }
+                    if (k.equals("address")) {log.warn("address can not be updated");}
                     Field field = ReflectionUtils.findField(User.class, k);
                     field.setAccessible(true);
                     ReflectionUtils.setField(field, user, v);
@@ -230,7 +228,7 @@ public class UserController {
             @RequestHeader String accountId){
         Optional<User> byAccountId = userRepository.findByAccountId(accountId);
         byAccountId.get().setAddress(user.getAddress());
-        userRepository.save(byAccountId.get());
+        userService.upsert(accountId, byAccountId.get());
         return ResponseEntity.ok().body(byAccountId.stream().map(
                 userX -> createUserObject(userX.getAccountId(),
                         userX.isGuardianRequired(),
@@ -244,9 +242,10 @@ public class UserController {
     public ResponseEntity<?> findUserByAge(
             @Valid @RequestHeader int age, @RequestHeader String role) {
         List<User> userByAgeAndRole = userService.findUserByAgeAndRole(age, role);
-        List<UserResponse> userResponses = new ArrayList<>();
-        return ResponseEntity.ok().body(userResponses.stream().map(userX -> createUserObject(userX.getAccountId(), userX.isGuardianRequired(), userX.getCreatedDate(), userX.isTemporarilyPassword())
-        ));
+        return ResponseEntity.ok().body(userByAgeAndRole.stream()
+                .map(userX -> createUserObject(userX.getAccountId(),
+                userX.isGuardianRequired(), userX.getCreatedDate(), userX.isTemporarilyPassword())
+        ).collect(Collectors.toList()));
 
     }
 
@@ -335,7 +334,7 @@ public class UserController {
 
     @GetMapping("/findByAccountId/{accountId}")
 //    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Optional<User>> doSomething(@Valid @PathVariable String accountId) {
+    public ResponseEntity<Optional<User>> findByAccountId(@Valid @PathVariable String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         return ResponseEntity.ok().body(user);
     }

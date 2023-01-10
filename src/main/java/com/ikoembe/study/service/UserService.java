@@ -3,12 +3,15 @@ package com.ikoembe.study.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.GuardianInfo;
+import com.mongodb.client.result.UpdateResult;
+import com.mongodb.internal.bulk.UpdateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -61,4 +64,18 @@ public class UserService {
 
     public BiFunction<LocalDate, Integer, Boolean> isOlderThan = (dob, year) ->
             dob.isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(year)));
+
+    public void upsert (String accountId, User user){
+        final Query query = new Query();
+        query.addCriteria(where(User.FIELD_ACCOUNTID).is(accountId));
+        Update update = new Update();
+        update.set(User.FIELD_ADDRESS_CITY,user.getAddress().getCity());
+        update.set(User.FIELD_ADDRESS_COUNTRY,user.getAddress().getCountry());
+        update.set(User.FIELD_ADDRESS_STREET,user.getAddress().getStreet());
+        update.set(User.FIELD_ADDRESS_ZIPCODE,user.getAddress().getZipcode());
+        update.set(User.FIELD_ADDRESS_NUMBER,user.getAddress().getNumber());
+        update.set(User.FIELD_ADDRESS_PHONENUMBER,user.getAddress().getPhoneNumber());
+        update.set(User.FIELD_ADDRESS_MOBILENUMBER,user.getAddress().getMobileNumber());
+        UpdateResult result = mongoTemplate.upsert(query, update, User.class);
+    }
 }
