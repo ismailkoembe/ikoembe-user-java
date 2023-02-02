@@ -1,5 +1,8 @@
 package com.ikoembe.study.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ikoembe.study.infra.UserCreatedMessage;
+import com.ikoembe.study.infra.UserCreatedMessageFactory;
 import com.ikoembe.study.models.Gender;
 import com.ikoembe.study.models.Major;
 import com.ikoembe.study.models.Roles;
@@ -21,6 +24,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Description;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +34,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.web.bind.annotation.*;
+import rabbitmq.RoutingKeys;
 
 import javax.validation.Valid;
 import java.lang.reflect.Field;
@@ -61,6 +66,12 @@ public class UserController {
 
     @Autowired
     ErrorResponse error;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
 
     @PostMapping("/create")
@@ -132,15 +143,26 @@ public class UserController {
             user.setCreatedDate(createdDate);
             userRepository.save(user);
             log.info("A new {} {} added", user.getRoles(), user.getUsername());
+            publishUserCreatedMessage(user);
 
             if (user.isGuardianRequired()) {
-                return ResponseEntity.status(201).body(createUserObject(user.getAccountId(),user.getFirstname(), user.getLastname(),
+                return ResponseEntity.status(201).body(createUserObject(user.getAccountId(), user.getFirstname(), user.getLastname(),
                         user.isGuardianRequired(), user.getMajors(), user.isTemporarilyPassword(), user.getRoles()));
             } else
-                return ResponseEntity.ok(createUserObject(user.getAccountId(),user.getFirstname(), user.getLastname(),
+                return ResponseEntity.ok(createUserObject(user.getAccountId(), user.getFirstname(), user.getLastname(),
                         user.isGuardianRequired(), user.getMajors(), user.isTemporarilyPassword(), user.getRoles()));
         } else
             return ResponseEntity.status(400).body(error.throwAnError("Admins, Teachers or Guardians should be older than 18"));
+    }
+
+    private void publishUserCreatedMessage(User user) {
+        try {
+            UserCreatedMessage userCreatedMessage = UserCreatedMessageFactory.newUserCreated(user);
+            rabbitTemplate.convertAndSend("user", RoutingKeys.USER_CREATED.getRoutingKeyString(),
+                    userCreatedMessage);
+        } catch (IllegalStateException msg) {
+            log.error("Failed to publish message:  {}", msg);
+        }
     }
 
     private void isAbleToBeRegistered(User user, AtomicBoolean isAdult, Set<Roles> roles, Roles role) {
@@ -163,6 +185,7 @@ public class UserController {
                 majors,
                 temporarilyPassword,roles );
     }
+
 
     @PostMapping("/addGuardian")
     @PreAuthorize("hasRole('ADMIN')")

@@ -4,7 +4,7 @@ services:
     image: mongo
     container_name: mongodb
     ports:
-      - 27017:27017
+      - "27017:27017"
     volumes:
       - ~/docker-volume/mongo:/data/db
     environment:
@@ -23,14 +23,16 @@ services:
     depends_on:
       - mongodb
   rabbitmq:
-     image: "rabbitmq"
-     ports:
-       - "9200:9200"
+    image: rabbitmq
+    container_name: RabbitMq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
 
   myapp:
     image:  ismailkoembe/user_ms:1.0.11
     container_name: myapp
     ports:
-      - 8080:8080
+      - "8080:8080"
     depends_on:
       - mongodb

@@ -1,8 +1,10 @@
 package com.ikoembe.study.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.lang.Nullable;
-import lombok.*;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -59,28 +61,34 @@ public class User {
   private String id;
 
   @Indexed(unique = true)
+  @JsonProperty
   private String accountId;
 
   @NotNull
   @Indexed(unique = true)
   @Size(max = 20)
+  @JsonProperty
   private String username;
 
   @NotBlank
   @Size(max = 20)
+  @JsonProperty
   private String firstname;
 
   @Nullable
   @Size(max = 20)
+  @JsonProperty
   private String middlename;
 
   @NotBlank
   @Size(max = 20)
+  @JsonProperty
   private String lastname;
 
   @NotBlank
   @Size(max = 50)
   @Email
+  @JsonProperty
   private String email;
 
   @NotBlank(message = "Password shouldn't be blank")
@@ -88,37 +96,48 @@ public class User {
   private String password;
 
   @Indexed
+  @JsonProperty
   private Set<Roles> roles = new HashSet<>();
 
+  @JsonProperty
   private String photoUrl;
 
+  @JsonProperty
   private boolean isGuardianRequired = false;
 
   @Nullable
+  @JsonProperty
   private List<String> guardiansAccountIds;
 
   @Indexed
-  @JsonFormat (shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+  @JsonProperty
   private LocalDate birthdate;
 
   @Indexed
+  @JsonProperty
   private Gender gender;
 
   @NotBlank
+  @JsonProperty
   private Address address;
 
   @NotNull
+  @JsonProperty
   private LocalDateTime createdDate;
 
   @Indexed
   @Nullable
+  @JsonProperty
   private LocalDateTime lastSignIn;
 
   @Nullable
+  @JsonProperty
   private boolean isTemporarilyPassword = true;
 
   private String temporarilyPass;
 
+  @JsonProperty
   private LocalDateTime lastPasswordUpdatedDate;
 
   @Nullable
