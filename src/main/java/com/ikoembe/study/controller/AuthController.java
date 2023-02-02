@@ -1,5 +1,6 @@
 package com.ikoembe.study.controller;
 
+import com.ikoembe.study.infra.RabbitConfiguration;
 import com.ikoembe.study.models.Roles;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.LoginRequest;
@@ -10,6 +11,7 @@ import com.ikoembe.study.repository.UserRepository;
 import com.ikoembe.study.security.jwt.JwtUtils;
 import com.ikoembe.study.security.services.UserDetailsImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -18,6 +20,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import rabbitmq.RoutingKeys;
 
 import javax.validation.Valid;
 import java.time.LocalDateTime;
@@ -40,6 +43,10 @@ public class AuthController {
 
     @Autowired
     JwtUtils jwtUtils;
+
+
+    @Autowired
+    private RabbitTemplate template;
 
 
     @PostMapping("/signin")
@@ -99,7 +106,9 @@ public class AuthController {
 
         user.setRoles(roles);
         userRepository.save(user);
-
+//        rabbitClient.sendMessage(RoutingKeys.USER_SIGNED_IN, signUpRequest.getUsername());
+//        template.convertAndSend(RabbitConfiguration.EXCHANGE,
+//                RabbitConfiguration.ROUTING_KEY, signUpRequest.toString());
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 

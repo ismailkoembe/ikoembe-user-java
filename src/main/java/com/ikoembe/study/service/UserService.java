@@ -1,10 +1,8 @@
 package com.ikoembe.study.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.GuardianInfo;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.internal.bulk.UpdateRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
