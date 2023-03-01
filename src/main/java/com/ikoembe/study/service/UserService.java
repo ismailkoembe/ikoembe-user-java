@@ -1,7 +1,10 @@
 package com.ikoembe.study.service;
 
+import com.ikoembe.study.models.Roles;
 import com.ikoembe.study.models.User;
 import com.ikoembe.study.payload.request.GuardianInfo;
+import com.ikoembe.study.repository.UserRepository;
+import com.ikoembe.study.util.ErrorResponse;
 import com.mongodb.client.result.UpdateResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.chrono.ChronoLocalDate;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -27,6 +32,12 @@ public class UserService {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+    @Autowired
+    UserRepository userRepository;
+
+    @Autowired
+    ErrorResponse error;
 
     public List<User> findUserByAgeAndRole(int age, String role) {
         Query query = new Query();
@@ -75,4 +86,13 @@ public class UserService {
         update.set(User.FIELD_ADDRESS_MOBILENUMBER,user.getAddress().getMobileNumber());
         UpdateResult result = mongoTemplate.upsert(query, update, User.class);
     }
+
+    public Boolean isUserExistsByUsername(String username){
+        return userRepository.existsByUsername(username);
+    }
+
+    public Boolean isUserExistsByEmail(String email){
+        return userRepository.existsByEmail(email);
+    }
+
 }

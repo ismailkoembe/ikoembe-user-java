@@ -76,13 +76,13 @@ public class UserController {
         log.info("temporaryPassword: " + temporaryPassword);
         LocalDateTime createdDate = LocalDateTime.now();
         AtomicBoolean isAdult = new AtomicBoolean(true);
-        if (userRepository.existsByUsername(user.getUsername())) {
+        if (userService.isUserExistsByUsername(user.getUsername())) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error: Username is already taken!"));
         }
 
-        if (user.getEmail() != null && userRepository.existsByEmail(user.getEmail())) {
+        if (user.getEmail() != null && userService.isUserExistsByEmail(user.getEmail())) {
             return ResponseEntity
                     .badRequest()
                     .body(new MessageResponse("Error: Email is already in use!"));
