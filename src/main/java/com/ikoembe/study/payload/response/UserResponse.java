@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 @Getter @Setter @AllArgsConstructor
 public class UserResponse {
     private String accountId;
+    private String firstname;
+    private String lastname;
     private boolean isGuardianRequired;
     private LocalDateTime createdDate;
     private boolean isTemporarilyPassword;
