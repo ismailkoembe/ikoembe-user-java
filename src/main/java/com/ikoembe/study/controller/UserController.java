@@ -123,10 +123,10 @@ public class UserController {
             log.info("A new {} {} added", user.getRoles(), user.getUsername());
 
             if (user.isGuardianRequired()) {
-                return ResponseEntity.status(201).body(createUserObject(user.getAccountId(),
+                return ResponseEntity.status(201).body(createUserObject(user.getAccountId(),user.getFirstname(), user.getLastname(),
                         user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
             } else
-                return ResponseEntity.ok(createUserObject(user.getAccountId(),
+                return ResponseEntity.ok(createUserObject(user.getAccountId(),user.getFirstname(), user.getLastname(),
                         user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
         } else
             return ResponseEntity.status(400).body(error.throwAnError("Admins, Teachers or Guardians should be older than 18"));
@@ -141,9 +141,13 @@ public class UserController {
         }
     }
 
-    private UserResponse createUserObject(String accountId, boolean guardianRequired, LocalDateTime createdDate, boolean temporarilyPassword) {
+    private UserResponse createUserObject(String accountId, String firstName, String lastName,
+                                          boolean guardianRequired, LocalDateTime createdDate,
+                                          boolean temporarilyPassword) {
         return new UserResponse(
                 accountId,
+                firstName,
+                lastName,
                 guardianRequired,
                 createdDate,
                 temporarilyPassword);
@@ -171,21 +175,26 @@ public class UserController {
     @ApiOperation("Client should call this api to get all guardian info thus guardian can be associated for student")
     public ResponseEntity<?> getAllGuardians(@RequestHeader String role) {
         List<User> guardiansList = userService.findUserByRole(role);
-        return ResponseEntity.ok().body(guardiansList.stream().map(g -> createUserObject(g.getAccountId(), g.isGuardianRequired(), g.getCreatedDate(), g.isTemporarilyPassword())));
+        return ResponseEntity.ok().body(guardiansList.stream().map(g -> createUserObject(g.getAccountId(),g.getFirstname(), g.getLastname(), g.isGuardianRequired(), g.getCreatedDate(), g.isTemporarilyPassword())));
     }
 
     @GetMapping("/byGender")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUsersByGender(@Valid @RequestHeader Gender gender) {
         List<User> user = userRepository.findAllByGender(gender);
-        return ResponseEntity.ok().body(user.stream().map(u -> createUserObject(u.getAccountId(), u.isGuardianRequired(), u.getCreatedDate(), u.isTemporarilyPassword())));
+        return ResponseEntity.ok().body(user.stream().map(u -> createUserObject(u.getAccountId(),u.getFirstname(), u.getLastname(), u.isGuardianRequired(), u.getCreatedDate(), u.isTemporarilyPassword())));
     }
 
     @GetMapping("/role")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getUsersByRole(@Valid @RequestHeader String role) {
         List<User> userByRole = userService.findUserByRole(role);
-        return ResponseEntity.ok().body(userByRole.stream().map(userX -> createUserObject(userX.getAccountId(), userX.isGuardianRequired(), userX.getCreatedDate(), userX.isTemporarilyPassword())));
+        return ResponseEntity.ok().body(userByRole.stream()
+                .map(userX -> createUserObject(userX.getAccountId(),
+                        userX.getFirstname(), userX.getLastname(),
+                        userX.isGuardianRequired(),
+                        userX.getCreatedDate(),
+                        userX.isTemporarilyPassword())));
 
     }
 
@@ -230,7 +239,7 @@ public class UserController {
         byAccountId.get().setAddress(user.getAddress());
         userService.upsert(accountId, byAccountId.get());
         return ResponseEntity.ok().body(byAccountId.stream().map(
-                userX -> createUserObject(userX.getAccountId(),
+                userX -> createUserObject(userX.getAccountId(),userX.getFirstname(), userX.getLastname(),
                         userX.isGuardianRequired(),
                         userX.getCreatedDate(),
                         userX.isTemporarilyPassword())));
@@ -243,7 +252,7 @@ public class UserController {
             @Valid @RequestHeader int age, @RequestHeader String role) {
         List<User> userByAgeAndRole = userService.findUserByAgeAndRole(age, role);
         return ResponseEntity.ok().body(userByAgeAndRole.stream()
-                .map(userX -> createUserObject(userX.getAccountId(),
+                .map(userX -> createUserObject(userX.getAccountId(),userX.getFirstname(), userX.getLastname(),
                 userX.isGuardianRequired(), userX.getCreatedDate(), userX.isTemporarilyPassword())
         ).collect(Collectors.toList()));
 
@@ -258,7 +267,9 @@ public class UserController {
         List<User> eligibleStudents = allStudents.stream().filter(user ->
                 user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(olderThan)))
         ).collect(Collectors.toList());
-        return ResponseEntity.ok().body(eligibleStudents.stream().map(e -> createUserObject(e.getAccountId(), e.isGuardianRequired(), e.getCreatedDate(), e.isTemporarilyPassword())
+        return ResponseEntity.ok().body(eligibleStudents.stream().map(e ->
+                createUserObject(e.getAccountId(), e.getFirstname(), e.getLastname(),
+                        e.isGuardianRequired(), e.getCreatedDate(), e.isTemporarilyPassword())
         ));
     }
 
@@ -294,7 +305,8 @@ public class UserController {
                     user.setTemporarilyPass(null);
                     userRepository.save(user);
                     return ResponseEntity.ok(
-                            createUserObject(user.getAccountId(), user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
+                            createUserObject(user.getAccountId(), user.getFirstname(), user.getLastname(),
+                                    user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
                 } else error.throwAnError("Current Password is not correct");
             } else {
                 if (encoder.matches(newPassword.get("currentPassword"), user.getPassword())) {
@@ -306,7 +318,8 @@ public class UserController {
                     user.setLastPasswordUpdatedDate(LocalDateTime.now());
                     userRepository.save(user);
                     return ResponseEntity.ok(
-                            createUserObject(user.getAccountId(), user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
+                            createUserObject(user.getAccountId(), user.getFirstname(), user.getLastname(),
+                                    user.isGuardianRequired(), user.getCreatedDate(), user.isTemporarilyPassword()));
                 } else error.throwAnError("Current Password is not correct");
 
             }
