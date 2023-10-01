@@ -14,9 +14,11 @@ import com.ikoembe.study.service.UserService;
 import com.ikoembe.study.util.ErrorResponse;
 import com.ikoembe.study.util.IsAuthenticated;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.headers.Header;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Description;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -274,6 +276,8 @@ public class UserController {
     }
 
     @GetMapping("/info")
+    @Description("Admin users get single user details to provide user to first log in " +
+            "thus user can get his temporary pass")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> giveUserDetails(@Valid @RequestHeader String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);

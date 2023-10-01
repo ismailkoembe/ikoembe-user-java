@@ -11,6 +11,7 @@ import com.ikoembe.study.security.jwt.JwtUtils;
 import com.ikoembe.study.security.services.UserDetailsImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Description;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -43,6 +44,7 @@ public class AuthController {
 
 
     @PostMapping("/signin")
+    @Description("It returns some necessary user details and user bearer token")
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         LocalDateTime lastSignIn = LocalDateTime.now();
         log.info("Login request for {}", loginRequest.getUsername());
@@ -59,7 +61,8 @@ public class AuthController {
         String jwt = jwtUtils.generateJwtToken(authentication);
 
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId()));
+        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), user.getAccountId(),
+                user.getPhotoUrl(), user.getFirstname(), user.getLastname(), user.getMiddlename(), user.getRoles()));
     }
 
     @Deprecated
