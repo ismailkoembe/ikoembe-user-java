@@ -3,10 +3,7 @@ package com.ikoembe.study.models;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.mongodb.lang.Nullable;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import model.Majors;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -23,7 +20,8 @@ import java.util.List;
 import java.util.Set;
 
 @Document(value = "users")
-@Getter @Setter @NoArgsConstructor
+@Data
+@NoArgsConstructor
 public class User {
   public static final String FIELD_ID = "id";
   public static final String FIELD_ACCOUNTID = "accountId";
@@ -55,7 +53,9 @@ public class User {
   public static final String FIELD_ADDRESS_NUMBER = "address.number";
   public static final String FIELD_ADDRESS_PHONENUMBER = "address.phoneNumber";
   public static final String FIELD_ADDRESS_MOBILENUMBER = "address.mobileNumber";
-
+  public static final String FIELD_MAJOR_NAME = "major.name";
+  public static final String FIELD_MAJOR_CODE = "major.code";
+  public static final String FIELD_MAJOR_ISPRIMARY = "major.isPrimary";
 
 
   @Id
@@ -141,8 +141,8 @@ public class User {
   @JsonProperty
   private LocalDateTime lastPasswordUpdatedDate;
 
-  @JsonProperty
-  private Set<Majors> majors;
+  @Nullable
+  private List<Major> majors;
 
 
   public User(String username, String email, String password) {
@@ -156,26 +156,5 @@ public class User {
     this.username = username;
     this.password = password;
     this.roles = roles;
-  }
-
-  @Override
-  public String toString() {
-    return "User{" +
-            "accountId='" + accountId + '\'' +
-            ", username='" + username + '\'' +
-            ", firstname='" + firstname + '\'' +
-            ", middlename='" + middlename + '\'' +
-            ", lastname='" + lastname + '\'' +
-            ", roles=" + roles +
-            ", photoUrl='" + photoUrl + '\'' +
-            ", isGuardianRequired=" + isGuardianRequired +
-            ", guardiansAccountIds=" + guardiansAccountIds +
-            ", birthdate=" + birthdate +
-            ", gender=" + gender +
-            ", address=" + address +
-            ", isTemporarilyPassword=" + isTemporarilyPassword +
-            ", temporarilyPass='" + temporarilyPass + '\'' +
-            ", majors=" + majors +
-            '}';
   }
 }
