@@ -10,6 +10,10 @@ import com.ikoembe.study.payload.response.MessageResponse;
 import com.ikoembe.study.repository.UserRepository;
 import com.ikoembe.study.security.jwt.JwtUtils;
 import com.ikoembe.study.security.services.UserDetailsImpl;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +54,10 @@ public class AuthController {
 
 
     @PostMapping("/signin")
+    @Operation(summary = "Signin", description = "User can get logged in and gets Bearer Token ")
+    @ApiResponse(responseCode = "200", description = "User can login",
+            content = @Content(mediaType = "application/json", schema= @Schema(implementation = User.class)))
+    @ApiResponse(responseCode = "400", description = "Bad call", content = @Content)
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         LocalDateTime lastSignIn = LocalDateTime.now();
         log.info("Login request for {}", loginRequest.getUsername());
