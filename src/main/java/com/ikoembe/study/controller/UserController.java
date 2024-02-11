@@ -14,8 +14,11 @@ import com.ikoembe.study.security.services.UserDetailsImpl;
 import com.ikoembe.study.service.UserService;
 import com.ikoembe.study.util.ErrorResponse;
 import com.ikoembe.study.util.IsAuthenticated;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,6 +65,11 @@ public class UserController {
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Create a new user", description = "Create a new user with the given details.")
+    @ApiResponse(responseCode = "200", description = "User created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
         String temporaryPassword = RandomStringUtils.random(12, true, true);
         log.info("temporaryPassword: " + temporaryPassword);
@@ -158,7 +166,13 @@ public class UserController {
 
     @PostMapping("/addGuardian")
     @PreAuthorize("hasRole('ADMIN')")
-    @ApiOperation("Client should call this endpoint if student is younger than 18")
+    @Operation(summary = "Adds guardians for student", description = "Client should call this endpoint if student is younger than 18")
+    @ApiResponse(responseCode = "200", description = "Guardian added successfully",
+            content = @Content(mediaType = "text/plain", examples = {
+                    @ExampleObject(name = "GuardianAddedExample", value = "Guardian XYZ added for \nStudent ABC")
+            }))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> addGuardian(@Valid @RequestBody List<GuardianInfo> guardianInfo,
                                          @RequestHeader String studentAccountId) {
         List<String> guardiansAccountId;
@@ -175,7 +189,13 @@ public class UserController {
 
     @GetMapping("/allGuardians")
     @PreAuthorize("hasRole('ADMIN')")
-    @ApiOperation("Client should call this api to get all guardian info thus guardian can be associated for student")
+    @Operation(summary = "Get all guardians information",
+            description = "Client should call this API to get all guardian info thus guardian can be associated for student")
+    @ApiResponse(responseCode = "200", description = "Guardians information retrieved successfully",
+            content = @Content(mediaType = "application/json",
+                    examples = {
+                            @ExampleObject(value = "[{\"accountId\": \"guardian1\", \"guardianRequired\": true, \"createdDate\": \"2024-02-10T12:30:00\", \"temporarilyPassword\": false},{\"accountId\": \"guardian2\", \"guardianRequired\": false, \"createdDate\": \"2024-02-11T10:45:00\", \"temporarilyPassword\": true}]")
+                    }))
     public ResponseEntity<?> getAllGuardians(@RequestHeader String role) {
         List<User> guardiansList = userService.findUserByRole(role);
         return ResponseEntity.ok().body(guardiansList.stream()
@@ -187,6 +207,11 @@ public class UserController {
 
     @GetMapping("/byGender")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get users by gender", description = "Gets all user by given genders")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> getUsersByGender(@Valid @RequestHeader Gender gender) {
         List<User> users = userRepository.findAllByGender(gender);
         return ResponseEntity.ok().body(users.stream().map(user -> createUserObject(user.getAccountId(),user.getFirstname(),
@@ -197,7 +222,12 @@ public class UserController {
     }
 
     @GetMapping("/role")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('TEACHER')")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get users by role", description = "Gets all user by given role")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content, useReturnTypeSchema = true)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content, useReturnTypeSchema = true)
     public ResponseEntity<?> getUsersByRole(@Valid @RequestHeader String role) {
         List<User> userByRole = userService.findUserByRole(role);
         return ResponseEntity.ok().body(userByRole.stream()
@@ -211,7 +241,13 @@ public class UserController {
 
     @PatchMapping(path = "/update/username/{username}")
     @IsAuthenticated
-    @ApiOperation(value = "Patches a user's information with username")
+    @GetMapping("/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Updates username", description = "Patches a user's information with username")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json"))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> patchUserInfo(
             @PathVariable String username, @RequestBody Map<String, Object> patches) {
         try {
@@ -242,7 +278,11 @@ public class UserController {
 
     @PatchMapping(path = "/update/username/{username}/address")
     @IsAuthenticated
-    @ApiOperation(value = "Patches a user's address information by accountId")
+    @Operation(summary = "Updates user address", description = "Patches a user's address information by accountId")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> patchUserAddress(
             @PathVariable String username, @RequestBody User user,
             @RequestHeader String accountId){
@@ -259,6 +299,11 @@ public class UserController {
 
     @GetMapping("/ByAgeAndRole")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get users by age and role", description = "Return user by ages and roles")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> findUserByAge(
             @Valid @RequestHeader int age, @RequestHeader String role) {
         List<User> userByAgeAndRole = userService.findUserByAgeAndRole(age, role);
@@ -271,6 +316,11 @@ public class UserController {
 
     @GetMapping("/studentByAge")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get students by age", description = "Return students by age")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> findStudentByAge(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             int olderThan) {
@@ -288,6 +338,11 @@ public class UserController {
     @Description("Admin users get single user details to provide user to first log in " +
             "thus user can get his temporary pass")
     @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get users details", description = "Returns user details by given accountId")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegistrationDetails.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> giveUserDetails(@Valid @RequestHeader String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         if (user.isPresent()) {
@@ -305,7 +360,11 @@ public class UserController {
 
     @PatchMapping(path = "/changePassword")
     @IsAuthenticated
-    @ApiOperation(value = "If user has temporary password, client should call force update user password")
+    @Operation(summary = "Updates user password", description = "If user has temporary password, client should call force update user password")
+    @ApiResponse(responseCode = "200", description = "Admin role is required",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> updatePassword(@RequestHeader String accountId, @RequestHeader String username,
                                             @RequestBody Map<String, String> newPassword) {
         try {
@@ -350,7 +409,14 @@ public class UserController {
     @GetMapping("/isPasswordChangeRequired")
 //    @PreAuthorize("hasAnyRole('ROLE_ADMIN', 'ROLE_TEACHER')")
     @IsAuthenticated
-    @ApiOperation(value = "Client should call this to understand if user should change password")
+//    @ApiOperation(value = "")
+    @Operation(summary = "Returns if password has to be changed", description = "Client should call this to understand if user should change password")
+    @ApiResponse(responseCode = "200", description = "User should change its password",
+            content = @Content(mediaType = "application/json"))
+    @ApiResponse(responseCode = "204", description = "Status 204 indicates password change is not required",
+            content = @Content(mediaType = "application/json"))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<?> isPasswordChangeRequired(@Valid @RequestHeader String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         if (user.get().isTemporarilyPassword()) {
@@ -360,7 +426,11 @@ public class UserController {
     }
 
     @GetMapping("/findByAccountId/{accountId}")
-//    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Get user by Id", description = "Gets a single user if account id is valid")
+    @ApiResponse(responseCode = "200", description = "User is found",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
+    @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
+    @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<Optional<User>> findByAccountId(@Valid @PathVariable String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         return ResponseEntity.ok().body(user);
