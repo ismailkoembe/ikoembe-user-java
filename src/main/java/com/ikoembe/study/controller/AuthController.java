@@ -49,7 +49,7 @@ public class AuthController {
     @PostMapping("/signin")
     @Operation(summary = "Signin", description = "User can get logged in and gets Bearer Token ")
     @ApiResponse(responseCode = "200", description = "User can login",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = JwtResponse.class)))
     @ApiResponse(responseCode = "400", description = "Bad call", content = @Content)
     public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
         LocalDateTime lastSignIn = LocalDateTime.now();
