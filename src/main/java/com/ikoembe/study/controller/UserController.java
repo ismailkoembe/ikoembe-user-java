@@ -15,7 +15,6 @@ import com.ikoembe.study.service.UserService;
 import com.ikoembe.study.util.ErrorResponse;
 import com.ikoembe.study.util.IsAuthenticated;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -71,8 +70,7 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> createUser(@Parameter(description = "Authorization token", required = true, example = "Bearer <your_token>")
-                                        @RequestHeader("Authorization") String authorizationHeader, @Valid @RequestBody User user) {
+    public ResponseEntity<?> createUser(@Valid @RequestBody User user) {
         String temporaryPassword = RandomStringUtils.random(12, true, true);
         log.info("temporaryPassword: " + temporaryPassword);
         LocalDateTime createdDate = LocalDateTime.now();
@@ -175,10 +173,7 @@ public class UserController {
             }))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> addGuardian(@Parameter(description = "Authorization token", required = true,
-            example = "Bearer <your_token>")
-                                         @RequestHeader("Authorization") String authorizationHeader,
-                                         @Valid @RequestBody List<GuardianInfo> guardianInfo,
+    public ResponseEntity<?> addGuardian(@Valid @RequestBody List<GuardianInfo> guardianInfo,
                                          @RequestHeader String studentAccountId) {
         List<String> guardiansAccountId;
         User student = userRepository.findByAccountId(studentAccountId).orElseThrow(
@@ -201,10 +196,7 @@ public class UserController {
                     examples = {
                             @ExampleObject(value = "[{\"accountId\": \"guardian1\", \"guardianRequired\": true, \"createdDate\": \"2024-02-10T12:30:00\", \"temporarilyPassword\": false},{\"accountId\": \"guardian2\", \"guardianRequired\": false, \"createdDate\": \"2024-02-11T10:45:00\", \"temporarilyPassword\": true}]")
                     }))
-    public ResponseEntity<?> getAllGuardians(@Parameter(description = "Authorization token",
-            required = true, example = "Bearer <your_token>")
-                                             @RequestHeader("Authorization") String authorizationHeader,
-                                             @RequestHeader String role) {
+    public ResponseEntity<?> getAllGuardians(@RequestHeader String role) {
         List<User> guardiansList = userService.findUserByRole(role);
         return ResponseEntity.ok().body(guardiansList.stream()
                 .map(guardian -> createUserObject(guardian.getAccountId(),
@@ -220,12 +212,9 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> getUsersByGender(@Parameter(description = "Authorization token",
-            required = true, example = "Bearer <your_token>")
-                                              @RequestHeader("Authorization") String authorizationHeader,
-                                              @Valid @RequestHeader Gender gender) {
+    public ResponseEntity<?> getUsersByGender(@Valid @RequestHeader Gender gender) {
         List<User> users = userRepository.findAllByGender(gender);
-        return ResponseEntity.ok().body(users.stream().map(user -> createUserObject(user.getAccountId(), user.getFirstname(),
+        return ResponseEntity.ok().body(users.stream().map(user -> createUserObject(user.getAccountId(),user.getFirstname(),
                 user.getLastname(),
                 user.isGuardianRequired(),
                 user.getMajors(),
@@ -239,17 +228,14 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content, useReturnTypeSchema = true)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content, useReturnTypeSchema = true)
-    public ResponseEntity<?> getUsersByRole(@Parameter(description = "Authorization token",
-            required = true, example = "Bearer <your_token>")
-                                            @RequestHeader("Authorization") String authorizationHeader,
-                                            @Valid @RequestHeader String role) {
+    public ResponseEntity<?> getUsersByRole(@Valid @RequestHeader String role) {
         List<User> userByRole = userService.findUserByRole(role);
         return ResponseEntity.ok().body(userByRole.stream()
                 .map(user -> createUserObject(user.getAccountId(),
                         user.getFirstname(), user.getLastname(),
                         user.isGuardianRequired(),
                         user.getMajors(),
-                        user.isTemporarilyPassword(), user.getRoles())));
+                        user.isTemporarilyPassword(),user.getRoles())));
 
     }
 
@@ -262,9 +248,8 @@ public class UserController {
             content = @Content(mediaType = "application/json"))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> patchUserInfo(@Parameter(description = "Authorization token", required = true, example = "Bearer <your_token>")
-                                           @RequestHeader("Authorization") String authorizationHeader,
-                                           @PathVariable String username, @RequestBody Map<String, Object> patches) {
+    public ResponseEntity<?> patchUserInfo(
+            @PathVariable String username, @RequestBody Map<String, Object> patches) {
         try {
             User user = userRepository.findByUsername(username);
             if (user != null) {
@@ -298,18 +283,17 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> patchUserAddress(@Parameter(description = "Authorization token", required = true, example = "Bearer <your_token>")
-                                              @RequestHeader("Authorization") String authorizationHeader,
-                                              @PathVariable String username, @RequestBody User user,
-                                              @RequestHeader String accountId) {
+    public ResponseEntity<?> patchUserAddress(
+            @PathVariable String username, @RequestBody User user,
+            @RequestHeader String accountId){
         Optional<User> byAccountId = userRepository.findByAccountId(accountId);
         byAccountId.get().setAddress(user.getAddress());
         userService.upsert(accountId, byAccountId.get());
         return ResponseEntity.ok().body(byAccountId.stream().map(
-                userX -> createUserObject(userX.getAccountId(), userX.getFirstname(), userX.getLastname(),
+                userX -> createUserObject(userX.getAccountId(),userX.getFirstname(), userX.getLastname(),
                         userX.isGuardianRequired(),
                         userX.getMajors(),
-                        userX.isTemporarilyPassword(), user.getRoles())));
+                        userX.isTemporarilyPassword(),user.getRoles())));
     }
 
 
@@ -320,15 +304,13 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> findUserByAge(@Parameter(description = "Authorization token",
-            required = true, example = "Bearer <your_token>")
-                                           @RequestHeader("Authorization") String authorizationHeader,
-                                           @Valid @RequestHeader int age, @RequestHeader String role) {
+    public ResponseEntity<?> findUserByAge(
+            @Valid @RequestHeader int age, @RequestHeader String role) {
         List<User> userByAgeAndRole = userService.findUserByAgeAndRole(age, role);
         return ResponseEntity.ok().body(userByAgeAndRole.stream()
-                .map(userX -> createUserObject(userX.getAccountId(), userX.getFirstname(), userX.getLastname(),
-                        userX.isGuardianRequired(), userX.getMajors(), userX.isTemporarilyPassword(), userX.getRoles())
-                ).collect(Collectors.toList()));
+                .map(userX -> createUserObject(userX.getAccountId(),userX.getFirstname(), userX.getLastname(),
+                userX.isGuardianRequired(), userX.getMajors(), userX.isTemporarilyPassword(),userX.getRoles())
+        ).collect(Collectors.toList()));
 
     }
 
@@ -339,18 +321,16 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> findStudentByAge(@Parameter(description = "Authorization token",
-            required = true, example = "Bearer <your_token>")
-                                              @RequestHeader("Authorization") String authorizationHeader,
-                                              @AuthenticationPrincipal UserDetailsImpl userDetails,
-                                              int olderThan) {
+    public ResponseEntity<?> findStudentByAge(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            int olderThan) {
         List<User> allStudents = userService.findUserByRole(Roles.ROLE_STUDENT.toString());
         List<User> eligibleStudents = allStudents.stream().filter(user ->
                 user.getBirthdate().isBefore(ChronoLocalDate.from(LocalDateTime.now().minusYears(olderThan)))
         ).collect(Collectors.toList());
         return ResponseEntity.ok().body(eligibleStudents.stream().map(user ->
                 createUserObject(user.getAccountId(), user.getFirstname(), user.getLastname(),
-                        user.isGuardianRequired(), user.getMajors(), user.isTemporarilyPassword(), user.getRoles())
+                        user.isGuardianRequired(), user.getMajors(), user.isTemporarilyPassword(),user.getRoles())
         ));
     }
 
@@ -363,9 +343,7 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = RegistrationDetails.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> giveUserDetails(
-            @Parameter(description = "Authorization token", required = true, example = "Bearer <your_token>")
-            @RequestHeader("Authorization") String authorizationHeader, @Valid @RequestHeader String accountId) {
+    public ResponseEntity<?> giveUserDetails(@Valid @RequestHeader String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         if (user.isPresent()) {
             return ResponseEntity.ok(new RegistrationDetails(
@@ -387,10 +365,8 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> updatePassword(
-            @Parameter(description = "Authorization token", required = true, example = "Bearer <your_token>")
-            @RequestHeader("Authorization") String authorizationHeader, @RequestHeader String accountId, @RequestHeader String username,
-            @RequestBody Map<String, String> newPassword) {
+    public ResponseEntity<?> updatePassword(@RequestHeader String accountId, @RequestHeader String username,
+                                            @RequestBody Map<String, String> newPassword) {
         try {
             User user = userRepository.findByAccountId(accountId, username);
             if (user.isTemporarilyPassword()) {
@@ -441,8 +417,7 @@ public class UserController {
             content = @Content(mediaType = "application/json"))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<?> isPasswordChangeRequired(@Parameter(description = "Authorization token", required = true, example = "Bearer <your_token>")
-                                                      @RequestHeader("Authorization") String authorizationHeader, @Valid @RequestHeader String accountId) {
+    public ResponseEntity<?> isPasswordChangeRequired(@Valid @RequestHeader String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         if (user.get().isTemporarilyPassword()) {
             return ResponseEntity.ok().body("Change the password");
@@ -456,8 +431,7 @@ public class UserController {
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
     @ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content)
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
-    public ResponseEntity<Optional<User>> findByAccountId(@Parameter(description = "Authorization token", required = true, example = "Bearer <your_token>")
-                                                          @RequestHeader("Authorization") String authorizationHeader, @Valid @PathVariable String accountId) {
+    public ResponseEntity<Optional<User>> findByAccountId(@Valid @PathVariable String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
         return ResponseEntity.ok().body(user);
     }
