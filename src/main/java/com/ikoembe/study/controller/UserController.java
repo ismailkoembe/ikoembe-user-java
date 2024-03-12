@@ -456,6 +456,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", description = "Forbidden", content = @Content)
     public ResponseEntity<Optional<User>> findByAccountId(@Valid @PathVariable String accountId) {
         Optional<User> user = userRepository.findByAccountId(accountId);
+        log.info("User is found {}, {}", user.orElseThrow().getUsername(), user.orElseThrow().getAccountId());
         return ResponseEntity.ok().body(user);
     }
 

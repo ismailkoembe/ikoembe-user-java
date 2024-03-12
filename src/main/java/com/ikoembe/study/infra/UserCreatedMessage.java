@@ -1,10 +1,10 @@
 package com.ikoembe.study.infra;
 
 import com.ikoembe.study.models.Gender;
+import com.ikoembe.study.models.Major;
 import com.ikoembe.study.models.Roles;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import model.Majors;
 
 import java.util.HashSet;
 import java.util.List;
@@ -29,6 +29,6 @@ public class UserCreatedMessage {
     //    private LocalDate birthdate;
     private Gender gender;
     //    private LocalDateTime createdDate;
-    private Set<Majors> majors;
+    private List<Major> majors;
 
 }
